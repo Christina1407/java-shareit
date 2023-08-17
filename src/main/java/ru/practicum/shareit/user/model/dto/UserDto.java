@@ -2,7 +2,7 @@ package ru.practicum.shareit.user.model.dto;
 
 import lombok.Builder;
 import lombok.Data;
-import ru.practicum.shareit.user.model.OnCreate;
+import ru.practicum.shareit.OnCreate;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;

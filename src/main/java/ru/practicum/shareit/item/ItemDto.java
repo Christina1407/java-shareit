@@ -3,9 +3,12 @@ package ru.practicum.shareit.item;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import ru.practicum.shareit.OnCreate;
 import ru.practicum.shareit.user.model.User;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
@@ -17,12 +20,12 @@ import javax.validation.constraints.Size;
 public class ItemDto {
     private static final int MAX_LENGTH_DESCRIPTION = 200;
     private Long id;
-    @NotBlank(message = "name is empty")
+    @NotBlank(message = "name is empty", groups = OnCreate.class)
     private final String name;
     @Size(max = MAX_LENGTH_DESCRIPTION, message = "description is more than 200 symbols")
-    @NotBlank(message = "description is empty")
+    @NotNull(message = "description is null", groups = OnCreate.class)
     private final String description;
-    @NotBlank(message = "available is empty")
+    @NotNull(message = "available is null", groups = OnCreate.class)
     private final Boolean available;
     //private final Integer numberOfRents;
 }

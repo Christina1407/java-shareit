@@ -12,7 +12,7 @@ import java.util.*;
 @Slf4j
 public class InMemoryUserRepository implements UserRepository {
     private final Map<Long, User> users = new HashMap<>();
-    private long id;
+    private long userId;
 
     @Override
     public List<User> getAllUsers() {
@@ -27,7 +27,7 @@ public class InMemoryUserRepository implements UserRepository {
             log.error("Пользователь с email = {} уже существует", user.getEmail());
             throw new AlreadyExistsException();
         }
-        user.setId(getId());
+        user.setId(getUserId());
         users.put(user.getId(), user);
 
         return user;
@@ -41,7 +41,9 @@ public class InMemoryUserRepository implements UserRepository {
     @Override
     public User updateUser(User user) {
         User userForUpdate = users.get(user.getId());
-        Optional.ofNullable(user.getName()).ifPresent(name -> userForUpdate.setName(user.getName()));
+        if (Objects.nonNull(user.getName()) && !user.getName().isBlank()) { // если имя пустое, то оно не меняется
+            userForUpdate.setName(user.getName());
+        }
         boolean matchEmail = users.values().stream()
                 .filter(userFromMap -> !userFromMap.getId().equals(user.getId()))
                 .anyMatch(userFromMap -> userFromMap.getEmail().equals(user.getEmail()));
@@ -49,7 +51,7 @@ public class InMemoryUserRepository implements UserRepository {
             log.error("Пользователь с email = {} уже существует", user.getEmail());
             throw new AlreadyExistsException();
         }
-        Optional.ofNullable(user.getEmail()).ifPresent(name -> userForUpdate.setEmail(user.getEmail()));
+        Optional.ofNullable(user.getEmail()).ifPresent(email -> userForUpdate.setEmail(user.getEmail()));
         return userForUpdate;
     }
 
@@ -62,7 +64,7 @@ public class InMemoryUserRepository implements UserRepository {
         return users.get(userId);
     }
 
-    private long getId() {
-        return ++id;
+    private long getUserId() {
+        return ++userId;
     }
 }
