@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.OnCreate;
+import ru.practicum.shareit.item.model.dto.ItemDto;
+import ru.practicum.shareit.item.service.ItemService;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -49,8 +51,9 @@ public class ItemController {
     }
 
     @GetMapping("/search")
-    public List<ItemDto> searchItems(@RequestParam String text) {
-        return itemService.searchItems(text);
+    public List<ItemDto> searchItems(@RequestParam @NotNull String text,
+                                     @RequestHeader("X-Sharer-User-Id") @NotNull @Min(1) Long renterId) {
+        return itemService.searchItems(text, renterId);
     }
 
 }

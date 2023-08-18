@@ -1,9 +1,11 @@
-package ru.practicum.shareit.item;
+package ru.practicum.shareit.item.model.dto;
 
 import org.springframework.stereotype.Component;
+import ru.practicum.shareit.item.model.Item;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
 @Component
 public class ItemMapper {
     public List<ItemDto> map(List<Item> items) {
@@ -20,6 +22,7 @@ public class ItemMapper {
                 .available(item.getAvailable())
                 .build();
     }
+
     private Item getBuild(ItemDto item, Long ownerId) {
         return Item.builder()
                 .id(item.getId())
@@ -33,6 +36,7 @@ public class ItemMapper {
     public ItemDto map(Item item) {
         return getBuild(item);
     }
+
     public Item map(ItemDto item, Long ownerId) {
         return getBuild(item, ownerId);
     }

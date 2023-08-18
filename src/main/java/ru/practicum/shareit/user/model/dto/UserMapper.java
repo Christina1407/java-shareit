@@ -2,7 +2,6 @@ package ru.practicum.shareit.user.model.dto;
 
 import org.springframework.stereotype.Component;
 import ru.practicum.shareit.user.model.User;
-import ru.practicum.shareit.user.model.dto.UserDto;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,6 +21,7 @@ public class UserMapper {
                 .email(user.getEmail())
                 .build();
     }
+
     private User getBuild(UserDto userDto) {
         return User.builder()
                 .id(userDto.getId())
@@ -33,6 +33,7 @@ public class UserMapper {
     public UserDto map(User user) {
         return getBuild(user);
     }
+
     public User map(UserDto userDto) {
         return getBuild(userDto);
     }

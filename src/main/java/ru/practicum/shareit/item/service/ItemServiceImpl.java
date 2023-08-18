@@ -1,9 +1,13 @@
-package ru.practicum.shareit.item;
+package ru.practicum.shareit.item.service;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.model.dto.ItemDto;
+import ru.practicum.shareit.item.model.dto.ItemMapper;
+import ru.practicum.shareit.item.repo.ItemRepository;
 import ru.practicum.shareit.user.repo.UserRepository;
 
 import java.util.List;
@@ -49,7 +53,8 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDto> searchItems(String text) {
-        return null;
+    public List<ItemDto> searchItems(String text, Long renterId) {
+        userRepository.findUserById(renterId);
+        return itemMapper.map(itemRepository.searchItems(text));
     }
 }

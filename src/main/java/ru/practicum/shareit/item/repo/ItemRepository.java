@@ -1,4 +1,6 @@
-package ru.practicum.shareit.item;
+package ru.practicum.shareit.item.repo;
+
+import ru.practicum.shareit.item.model.Item;
 
 import java.util.List;
 
@@ -12,4 +14,6 @@ public interface ItemRepository {
     Item findItemById(Long itemId);
 
     List<Item> findUsersItems(Long ownerId);
+
+    List<Item> searchItems(String text);
 }

@@ -27,16 +27,19 @@ public class ExceptionsHandler {
         });
         return new ExceptionValidationResponse(errors);
     }
+
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ExceptionResponse handleNotFoundException(final NotFoundException e) {
         return new ExceptionResponse("Искомый объект не найден");
     }
+
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
     public ExceptionResponse handleNotFoundException(final AlreadyExistsException e) {
         return new ExceptionResponse("Искомый объект уже существует");
     }
+
     @ExceptionHandler({ConstraintViolationException.class, MethodArgumentTypeMismatchException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handleBadRequestException(final Exception e) {

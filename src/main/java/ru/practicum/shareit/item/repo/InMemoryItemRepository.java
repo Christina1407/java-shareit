@@ -1,28 +1,29 @@
-package ru.practicum.shareit.item;
+package ru.practicum.shareit.item.repo;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
-import ru.practicum.shareit.exception.AlreadyExistsException;
 import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.item.model.Item;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 @Slf4j
-public class InMemoryItemRepository implements ItemRepository{
+public class InMemoryItemRepository implements ItemRepository {
     private final Map<Long, List<Item>> items = new HashMap<>();
     private long itemId;
+
     @Override
     public Item saveItem(Item item) {
         item.setId(getItemId());
         items.compute(item.getOwnerId(), (ownerId, userItems) -> {
-            if(userItems == null) {
+            if (userItems == null) {
                 userItems = new ArrayList<>();
             }
             userItems.add(item);
             return userItems;
         });
-
         return item;
     }
 
@@ -38,7 +39,6 @@ public class InMemoryItemRepository implements ItemRepository{
         Optional.ofNullable(item.getDescription()).ifPresent(description -> itemForUpdate.setDescription(item.getDescription())); //описание может быть пустым
         Optional.ofNullable(item.getAvailable()).ifPresent(available -> itemForUpdate.setAvailable(item.getAvailable()));
         return itemForUpdate;
-
     }
 
     @Override
@@ -63,6 +63,18 @@ public class InMemoryItemRepository implements ItemRepository{
         return items.getOrDefault(ownerId, Collections.emptyList());
     }
 
+    @Override
+    public List<Item> searchItems(String text) {
+        if (Objects.nonNull(text) && text.isBlank()) {
+            return new ArrayList<>();
+        }
+        return items.values().stream()
+                .flatMap(Collection::stream)
+                .filter(item -> item.getName().toLowerCase().contains(text.toLowerCase())
+                        || item.getDescription().toLowerCase().contains(text.toLowerCase()))
+                .filter(item -> Boolean.TRUE.equals(item.getAvailable()))
+                .collect(Collectors.toList());
+    }
 
     private long getItemId() {
         return ++itemId;
