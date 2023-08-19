@@ -21,11 +21,12 @@ import java.util.List;
 @Slf4j
 @Validated
 public class ItemController {
-    ItemService itemService;
+    private final ItemService itemService;
+    private static final String USER_ID = "X-Sharer-User-Id";
 
     @PostMapping()
     public ItemDto create(@Validated(OnCreate.class) @RequestBody ItemDto item,
-                          @RequestHeader("X-Sharer-User-Id") @Min(1) Long ownerId) {
+                          @RequestHeader(USER_ID) @Min(1) Long ownerId) {
         log.info("Попытка создания новой вещи {}", item);
         return itemService.saveItem(item, ownerId);
     }
@@ -33,7 +34,7 @@ public class ItemController {
     @PatchMapping("{itemId}")
     public ItemDto update(@PathVariable("itemId") @Min(1) Long itemId,
                           @RequestBody ItemDto itemDto,
-                          @RequestHeader("X-Sharer-User-Id") @NotNull @Min(1) Long ownerId) {
+                          @RequestHeader(USER_ID) @NotNull @Min(1) Long ownerId) {
         log.info("Попытка обновления item id = {}", itemId);
         itemDto.setId(itemId);
         return itemService.updateItem(itemDto, ownerId);
@@ -41,18 +42,18 @@ public class ItemController {
 
     @GetMapping("{itemId}")
     public ItemDto findItemById(@PathVariable("itemId") @Min(1) Long itemId,
-                                @RequestHeader("X-Sharer-User-Id") @NotNull @Min(1) Long ownerId) {
+                                @RequestHeader(USER_ID) @NotNull @Min(1) Long ownerId) {
         return itemService.findItemById(itemId, ownerId);
     }
 
     @GetMapping
-    public List<ItemDto> findUsersItems(@RequestHeader("X-Sharer-User-Id") @NotNull @Min(1) Long ownerId) {
+    public List<ItemDto> findUsersItems(@RequestHeader(USER_ID) @NotNull @Min(1) Long ownerId) {
         return itemService.findUsersItems(ownerId);
     }
 
     @GetMapping("/search")
     public List<ItemDto> searchItems(@RequestParam @NotNull String text,
-                                     @RequestHeader("X-Sharer-User-Id") @NotNull @Min(1) Long renterId) {
+                                     @RequestHeader(USER_ID) @NotNull @Min(1) Long renterId) {
         return itemService.searchItems(text, renterId);
     }
 

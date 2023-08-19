@@ -21,14 +21,14 @@ import java.util.List;
 @Validated
 @Slf4j
 public class UserController {
-    UserService userService;
+    private final UserService userService;
 
-    @GetMapping()
+    @GetMapping
     public List<UserDto> findAll() {
         return userService.getAllUsers();
     }
 
-    @PostMapping()
+    @PostMapping
     @Validated(OnCreate.class)
     public UserDto create(@Valid @RequestBody UserDto user) {
         log.info("Попытка создания нового пользователя {}", user);
@@ -43,7 +43,7 @@ public class UserController {
 
     @PatchMapping("{userId}")
     public UserDto update(@PathVariable("userId") @Min(1) Long userId,
-                          @RequestBody UserDto user) {
+                          @Valid @RequestBody UserDto user) {
         log.info("Попытка обновления пользователя id = {}", userId);
         user.setId(userId);
         return userService.updateUser(user);

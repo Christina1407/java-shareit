@@ -36,7 +36,7 @@ public class ExceptionsHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ExceptionResponse handleNotFoundException(final AlreadyExistsException e) {
+    public ExceptionResponse handleAlreadyExistsException(final AlreadyExistsException e) {
         return new ExceptionResponse("Искомый объект уже существует");
     }
 
