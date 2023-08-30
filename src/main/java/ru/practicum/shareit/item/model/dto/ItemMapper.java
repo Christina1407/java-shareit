@@ -24,13 +24,14 @@ public class ItemMapper {
     }
 
     private Item getBuild(ItemDto item, Long ownerId) {
-        return Item.builder()
-                .id(item.getId())
-                .name(item.getName())
-                .description(item.getDescription())
-                .available(item.getAvailable())
-                .ownerId(ownerId)
-                .build();
+//        return Item.builder()
+//                .id(item.getId())
+//                .name(item.getName())
+//                .description(item.getDescription())
+//                .available(item.getAvailable())
+//                .ownerId(ownerId)
+//                .build();
+        return null;
     }
 
     public ItemDto map(Item item) {

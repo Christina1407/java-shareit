@@ -19,11 +19,11 @@ public class ItemDto {
     private static final int MAX_LENGTH_DESCRIPTION = 200;
     private Long id;
     @NotBlank(message = "name is empty", groups = OnCreate.class)
+    @Size(max = MAX_LENGTH_DESCRIPTION, message = "name is more than 200 symbols")
     private final String name;
     @Size(max = MAX_LENGTH_DESCRIPTION, message = "description is more than 200 symbols")
     @NotNull(message = "description is null", groups = OnCreate.class)
     private final String description;
     @NotNull(message = "available is null", groups = OnCreate.class)
     private final Boolean available;
-    //private final Integer numberOfRents;
 }

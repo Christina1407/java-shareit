@@ -9,6 +9,7 @@ import ru.practicum.shareit.user.model.dto.UserMapper;
 import ru.practicum.shareit.user.repo.UserRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -19,30 +20,31 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getAllUsers() {
-        return userMapper.map(userRepository.getAllUsers());
+        return userMapper.map(userRepository.findAll());
     }
 
     @Override
     public UserDto saveUser(UserDto userDto) {
         User user = userMapper.map(userDto);
-        return userMapper.map(userRepository.saveUser(user));
+        return userMapper.map(userRepository.save(user));
     }
 
     @Override
     public void deleteUser(Long userId) {
-        findUserById(userId);
-        userRepository.deleteUser(userId);
+        Optional<User> user = userRepository.findById(userId);
+        user.ifPresent(userRepository::delete);
     }
 
     @Override
     public UserDto updateUser(UserDto userDto) {
         findUserById(userDto.getId());
         User user = userMapper.map(userDto);
-        return userMapper.map(userRepository.updateUser(user));
+        return userMapper.map(userRepository.save(user));
     }
 
     @Override
     public UserDto findUserById(Long userId) {
-        return userMapper.map(userRepository.findUserById(userId));
+        Optional<User> user = userRepository.findById(userId);
+        return user.map(userMapper::map).orElse(null);
     }
 }
