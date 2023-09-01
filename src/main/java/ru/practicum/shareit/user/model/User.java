@@ -26,6 +26,6 @@ public class User {
     private String email;
     @Column(name = "name", nullable = false, length = 200)
     private String name;
-    @OneToMany(mappedBy="user")
+    @OneToMany(mappedBy= "owner")
     List<Item> items;
 }

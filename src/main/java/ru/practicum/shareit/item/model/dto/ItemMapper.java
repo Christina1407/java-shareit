@@ -30,7 +30,7 @@ public class ItemMapper {
                 .name(item.getName())
                 .description(item.getDescription())
                 .available(item.getAvailable())
-                .user(user)
+                .owner(user)
                 .build();
     }
 

@@ -7,14 +7,16 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import ru.practicum.shareit.booking.BookingController;
 import ru.practicum.shareit.item.ItemController;
 import ru.practicum.shareit.user.UserController;
 
 import javax.validation.ConstraintViolationException;
+import javax.validation.ValidationException;
 import java.util.HashMap;
 import java.util.Map;
 
-@RestControllerAdvice(assignableTypes = {UserController.class, ItemController.class})
+@RestControllerAdvice(assignableTypes = {UserController.class, ItemController.class, BookingController.class})
 public class ExceptionsHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -33,7 +35,11 @@ public class ExceptionsHandler {
     public ExceptionResponse handleNotFoundException(final NotFoundException e) {
         return new ExceptionResponse("Искомый объект не найден");
     }
-
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handleNotAllowedException(final NotAllowedException e) {
+        return new ExceptionResponse("Объект недоступен");
+    }
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
     public ExceptionResponse handleAlreadyExistsException(final AlreadyExistsException e) {
@@ -43,6 +49,15 @@ public class ExceptionsHandler {
     @ExceptionHandler({ConstraintViolationException.class, MethodArgumentTypeMismatchException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handleBadRequestException(final Exception e) {
+        if (e.getMessage().contains("EnumState")) {
+            return new ExceptionResponse("Unknown state: UNSUPPORTED_STATUS");
+        }
         return new ExceptionResponse("Некорректные параметры запроса");
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handleValidationException(final ValidationException e) {
+        return new ExceptionResponse(e.getMessage());
     }
 }

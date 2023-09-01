@@ -8,6 +8,8 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.model.dto.ItemDto;
 import ru.practicum.shareit.item.model.dto.ItemMapper;
 import ru.practicum.shareit.item.repo.ItemRepository;
+import ru.practicum.shareit.manager.ItemManager;
+import ru.practicum.shareit.manager.UserManager;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repo.UserRepository;
 
@@ -22,11 +24,12 @@ import java.util.Optional;
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final ItemMapper itemMapper;
-    private final UserRepository userRepository;
+    private final UserManager userManager;
+    private final ItemManager itemManager;
 
     @Override
     public ItemDto saveItem(ItemDto itemDto, Long ownerId) {
-        User user = checkUser(ownerId);
+        User user = userManager.findUserById(ownerId);
         Item item = itemMapper.map(itemDto, user);
         return itemMapper.map(itemRepository.save(item));
     }
@@ -34,8 +37,8 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public ItemDto updateItem(ItemDto itemDto, Long ownerId) {
         //проверка, что айдишники существующих юзера и вещи
-        User user = checkUser(ownerId);
-        itemRepository.findById(itemDto.getId()).orElseThrow(NotFoundException::new);
+        User user = userManager.findUserById(ownerId);
+        itemManager.findItemById(itemDto.getId());
         if (user.getItems().stream().noneMatch(item -> item.getId().equals(itemDto.getId()))) {
             log.error("Редактировать вещь может только её владелец. Пользователь c id = {} не владелец вещи {}", ownerId, itemDto);
             throw new NotFoundException();
@@ -48,20 +51,20 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto findItemById(Long itemId, Long ownerId) {
-        checkUser(ownerId);
-        Optional<Item> item = itemRepository.findById(itemId);
-        return item.map(itemMapper::map).orElseThrow(NotFoundException::new);
+        userManager.findUserById(ownerId);
+        Item item = itemManager.findItemById(itemId);
+        return itemMapper.map(item);
     }
 
     @Override
     public List<ItemDto> findUsersItems(Long ownerId) {
-        User user = checkUser(ownerId);
+        User user = userManager.findUserById(ownerId);
         return itemMapper.map(user.getItems());
     }
 
     @Override
     public List<ItemDto> searchItems(String text, Long renterId) {
-        checkUser(renterId);
+        userManager.findUserById(renterId);
         if (Objects.nonNull(text) && text.isBlank()) {
             return new ArrayList<>();
         }
@@ -81,7 +84,4 @@ public class ItemServiceImpl implements ItemService {
         return itemForUpdate;
     }
 
-    private User checkUser(Long ownerId) {
-        return userRepository.findById(ownerId).orElseThrow(NotFoundException::new);
-    }
 }
