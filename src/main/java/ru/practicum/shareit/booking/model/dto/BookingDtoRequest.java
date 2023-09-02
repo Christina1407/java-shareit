@@ -1,13 +1,13 @@
-package ru.practicum.shareit.booking.dto;
+package ru.practicum.shareit.booking.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import org.springframework.context.annotation.DependsOn;
 import ru.practicum.shareit.OnCreate;
-import ru.practicum.shareit.booking.EnumStatus;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.Future;
+import javax.validation.constraints.FutureOrPresent;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Data

@@ -1,6 +1,7 @@
-package ru.practicum.shareit.booking;
+package ru.practicum.shareit.booking.model;
 
 import lombok.*;
+import ru.practicum.shareit.booking.enums.EnumStatus;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
  */
 @Builder
 @Entity
-@Table(name = "booking", schema = "public")
+@Table(name = "bookings", schema = "public")
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter

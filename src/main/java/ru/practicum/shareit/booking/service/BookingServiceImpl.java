@@ -1,11 +1,15 @@
-package ru.practicum.shareit.booking;
+package ru.practicum.shareit.booking.service;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.booking.dto.BookingDtoRequest;
-import ru.practicum.shareit.booking.dto.BookingDtoResponse;
-import ru.practicum.shareit.booking.dto.BookingMapper;
+import ru.practicum.shareit.booking.enums.EnumState;
+import ru.practicum.shareit.booking.enums.EnumStatus;
+import ru.practicum.shareit.booking.model.dto.BookingDtoRequest;
+import ru.practicum.shareit.booking.model.dto.BookingDtoResponse;
+import ru.practicum.shareit.booking.model.dto.BookingMapper;
+import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.repo.BookingRepository;
 import ru.practicum.shareit.exception.NotAllowedException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.model.Item;
@@ -18,6 +22,7 @@ import javax.validation.ValidationException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -69,8 +74,6 @@ public class BookingServiceImpl implements BookingService {
             } else {
                 if (approved) {
                     booking.setStatus(EnumStatus.APPROVED);
-//                    item.setAvailable(false);
-//                    itemRepository.save(item);
                     bookingRepository.save(booking);
                 } else {
                     booking.setStatus(EnumStatus.REJECTED);
@@ -103,25 +106,63 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDtoResponse> findUsersBookings(Long bookerId, EnumState state) {
-        userManager.findUserById(bookerId);
-        List<EnumStatus> statusList = List.of(EnumStatus.REJECTED, EnumStatus.WAITING, EnumStatus.APPROVED, EnumStatus.CANCELED);
+    public List<BookingDtoResponse> findUsersBookings(Long userId, EnumState state) {
+        userManager.findUserById(userId);
         List<Booking> bookings = new ArrayList<>();
         switch (state) {
             case ALL:
-                bookings = bookingRepository.findByBooker_IdAndStatusInOrderByStartDateDesc(bookerId, statusList);
+                bookings = bookingRepository.findByBooker_IdOrderByStartDateDesc(userId);
                 break;
             case PAST:
+                bookings = bookingRepository.findByBooker_IdAndEndDateLessThanEqualOrderByStartDateDesc(userId, LocalDateTime.now());
+                break;
             case CURRENT:
+                bookings = bookingRepository.findCurrentBookings(userId, LocalDateTime.now());
+                break;
             case FUTURE:
-                bookings = bookingRepository.findByBooker_IdAndStatusInAndStartDateGreaterThanEqualOrderByStartDateDesc(bookerId, List.of(EnumStatus.APPROVED, EnumStatus.WAITING),
-                        LocalDateTime.now());
+                bookings = bookingRepository.findByBooker_IdAndStartDateGreaterThanEqualOrderByStartDateDesc(userId, LocalDateTime.now());
                 break;
             case WAITING:
-                bookings = bookingRepository.findByBooker_IdAndStatusInOrderByStartDateDesc(bookerId, List.of(EnumStatus.WAITING));
+                bookings = bookingRepository.findByBooker_IdAndStatusInOrderByStartDateDesc(userId, List.of(EnumStatus.WAITING));
                 break;
             case REJECTED:
-                bookings = bookingRepository.findByBooker_IdAndStatusInOrderByStartDateDesc(bookerId, List.of(EnumStatus.REJECTED, EnumStatus.CANCELED));
+                bookings = bookingRepository.findByBooker_IdAndStatusInOrderByStartDateDesc(userId, List.of(EnumStatus.REJECTED, EnumStatus.CANCELED));
+                break;
+        }
+        return bookingMapper.map(bookings);
+    }
+
+    @Override
+    public List<BookingDtoResponse> findOwnersBookings(Long ownerId, EnumState state) {
+        User user =  userManager.findUserById(ownerId);
+        List<Item> items = user.getItems();
+        if (items.isEmpty()) {
+            log.error("У пользователя c id = {} нет вещей {}", ownerId, items);
+            throw new NotFoundException();
+        }
+        List<Long> itemsIds = items.stream()
+                .map(Item::getId)
+                .collect(Collectors.toList());
+        List<Booking> bookings = new ArrayList<>();
+
+        switch (state) {
+            case ALL:
+                bookings = bookingRepository.findByItem_IdInOrderByStartDateDesc(itemsIds);
+                break;
+            case PAST:
+                bookings = bookingRepository.findByItem_IdInAndEndDateLessThanEqualOrderByStartDateDesc(itemsIds, LocalDateTime.now());
+                break;
+            case CURRENT:
+                bookings = bookingRepository.findCurrentOwnerBookings(itemsIds, LocalDateTime.now());
+                break;
+            case FUTURE:
+                bookings = bookingRepository.findByItem_IdInAndStartDateGreaterThanEqualOrderByStartDateDesc(itemsIds, LocalDateTime.now());
+                break;
+            case WAITING:
+                bookings = bookingRepository.findByItem_IdInAndStatusInOrderByStartDateDesc(itemsIds, List.of(EnumStatus.WAITING));
+                break;
+            case REJECTED:
+                bookings = bookingRepository.findByItem_IdInAndStatusInOrderByStartDateDesc(itemsIds, List.of(EnumStatus.REJECTED, EnumStatus.CANCELED));
                 break;
         }
         return bookingMapper.map(bookings);

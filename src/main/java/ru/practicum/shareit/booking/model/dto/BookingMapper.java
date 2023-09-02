@@ -1,8 +1,8 @@
-package ru.practicum.shareit.booking.dto;
+package ru.practicum.shareit.booking.model.dto;
 
 import org.springframework.stereotype.Component;
-import ru.practicum.shareit.booking.Booking;
-import ru.practicum.shareit.booking.EnumStatus;
+import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.enums.EnumStatus;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.model.dto.ItemBookingDto;
 import ru.practicum.shareit.user.UserBookingDto;

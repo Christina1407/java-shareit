@@ -5,8 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.OnCreate;
-import ru.practicum.shareit.booking.dto.BookingDtoRequest;
-import ru.practicum.shareit.booking.dto.BookingDtoResponse;
+import ru.practicum.shareit.booking.enums.EnumState;
+import ru.practicum.shareit.booking.model.dto.BookingDtoRequest;
+import ru.practicum.shareit.booking.model.dto.BookingDtoResponse;
+import ru.practicum.shareit.booking.service.BookingService;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -51,10 +53,9 @@ public class BookingController {
                                                       @RequestParam(name = "state", defaultValue = "ALL") EnumState state) {
         return bookingService.findUsersBookings(bookerId, state);
     }
-//
-//    @GetMapping("/search")
-//    public List<ItemDto> searchItems(@RequestParam @NotNull String text,
-//                                     @RequestHeader(USER_ID) @NotNull @Min(1) Long renterId) {
-//        return itemService.searchItems(text, renterId);
-//    }
+    @GetMapping("/owner")
+    public List<BookingDtoResponse> findOwnersBookings(@RequestHeader(USER_ID) @NotNull @Min(1) Long ownerId,
+                                                      @RequestParam(name = "state", defaultValue = "ALL") EnumState state) {
+        return bookingService.findOwnersBookings(ownerId, state);
+    }
 }

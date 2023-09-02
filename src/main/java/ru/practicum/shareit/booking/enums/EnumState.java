@@ -1,6 +1,4 @@
-package ru.practicum.shareit.booking;
-
-import com.fasterxml.jackson.annotation.JsonValue;
+package ru.practicum.shareit.booking.enums;
 
 public enum EnumState {
     ALL,
