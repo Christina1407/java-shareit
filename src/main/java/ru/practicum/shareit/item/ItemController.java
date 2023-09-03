@@ -17,9 +17,6 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
-/**
- * TODO Sprint add-controllers.
- */
 @RestController
 @RequestMapping("/items")
 @AllArgsConstructor
@@ -31,7 +28,7 @@ public class ItemController {
 
     @PostMapping()
     public ItemDto create(@Validated(OnCreate.class) @RequestBody ItemDtoRequest item,
-                                  @RequestHeader(USER_ID) @Min(1) Long ownerId) {
+                          @RequestHeader(USER_ID) @Min(1) Long ownerId) {
         log.info("Попытка создания новой вещи {}", item);
         return itemService.saveItem(item, ownerId);
     }
@@ -47,7 +44,7 @@ public class ItemController {
 
     @GetMapping("{itemId}")
     public ItemDtoResponse findItemById(@PathVariable("itemId") @Min(1) Long itemId,
-                                @RequestHeader(USER_ID) @NotNull @Min(1) Long userId) {
+                                        @RequestHeader(USER_ID) @NotNull @Min(1) Long userId) {
         return itemService.findItemById(itemId, userId);
     }
 
@@ -61,11 +58,12 @@ public class ItemController {
                                      @RequestHeader(USER_ID) @NotNull @Min(1) Long renterId) {
         return itemService.searchItems(text, renterId);
     }
+
     @PostMapping("{itemId}/comment")
     public CommentDtoResponse createComment(@Valid @RequestBody CommentDtoRequest comment,
                                             @PathVariable("itemId") @Min(1) Long itemId,
                                             @RequestHeader(USER_ID) @Min(1) Long userId) {
-        log.info("Попытка создания нового комментария {} to Item id = {}", comment, itemId );
+        log.info("Попытка создания нового комментария {} to Item id = {}", comment, itemId);
         return itemService.saveComment(comment, itemId, userId);
     }
 }

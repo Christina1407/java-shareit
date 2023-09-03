@@ -2,10 +2,14 @@ package ru.practicum.shareit.item.service;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.item.comments.model.Comment;
 import ru.practicum.shareit.item.comments.model.dto.CommentDtoRequest;
 import ru.practicum.shareit.item.comments.model.dto.CommentDtoResponse;
+import ru.practicum.shareit.item.comments.model.dto.CommentMapper;
 import ru.practicum.shareit.item.comments.repo.CommentRepository;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.model.dto.ItemDto;
@@ -22,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -29,6 +34,7 @@ import java.util.Optional;
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final ItemMapper itemMapper;
+    private final CommentMapper commentMapper;
     private final UserManager userManager;
     private final ItemManager itemManager;
     private final BookingManager bookingManager;
@@ -39,6 +45,14 @@ public class ItemServiceImpl implements ItemService {
         User user = userManager.findUserById(ownerId);
         Item item = itemMapper.map(itemDto, user);
         return itemMapper.map(itemRepository.save(item));
+    }
+
+    @Override
+    public CommentDtoResponse saveComment(CommentDtoRequest commentDtoRequest, Long itemId, Long userId) {
+        User user = userManager.findUserById(userId);
+        Item item = itemManager.findItemById(itemId);
+        List<Booking> bookings = bookingManager.findBookingsByItemIdAndBookerId(itemId, userId);
+        return commentMapper.map(commentRepository.save(commentMapper.map(commentDtoRequest, user, item)));
     }
 
     @Override
@@ -59,11 +73,17 @@ public class ItemServiceImpl implements ItemService {
     public ItemDtoResponse findItemById(Long itemId, Long userId) {
         userManager.findUserById(userId);
         Item item = itemManager.findItemById(itemId);
+        List<CommentDtoResponse> comments = getComments(List.of(itemId));
         if (item.getOwner().getId().equals(userId)) {
-            return itemMapper.map(item, bookingManager.findLastBooking(item), bookingManager.findNextBooking(item));
+            return itemMapper.map(item, bookingManager.findLastBooking(item), bookingManager.findNextBooking(item), comments);
         } else {
-            return itemMapper.map(item, null, null);
+            return itemMapper.map(item, null, null, comments);
         }
+    }
+
+    private List<CommentDtoResponse> getComments(List<Long> itemIds) {
+        List<Comment> comments = commentRepository.findByItem_IdIn(itemIds, Sort.by(Sort.Direction.DESC, "createdDate"));
+        return commentMapper.map(comments);
     }
 
     @Override
@@ -74,9 +94,12 @@ public class ItemServiceImpl implements ItemService {
 
     private List<ItemDtoResponse> mapItemList(User user) {
         List<ItemDtoResponse> responseList = new ArrayList<>();
+        List<CommentDtoResponse> comments = getComments(user.getItems().stream()
+                .map(Item::getId)
+                .collect(Collectors.toList()));
         user.getItems().forEach(
                 item -> {
-                    responseList.add(itemMapper.map(item, bookingManager.findLastBooking(item), bookingManager.findNextBooking(item)));
+                    responseList.add(itemMapper.map(item, bookingManager.findLastBooking(item), bookingManager.findNextBooking(item), comments));
                 }
         );
         return responseList;
@@ -91,12 +114,6 @@ public class ItemServiceImpl implements ItemService {
         return itemMapper.map(itemRepository.searchItemsByNameAndDescription("%" + text + "%"));
     }
 
-    @Override
-    public CommentDtoResponse saveComment(CommentDtoRequest comment, Long itemId, Long userId) {
-        User user = userManager.findUserById(userId);
-        Item item = itemManager.findItemById(itemId);
-        return null;
-    }
 
     private Item preUpdate(User user, Item item) {
         Item itemForUpdate = user.getItems().stream()

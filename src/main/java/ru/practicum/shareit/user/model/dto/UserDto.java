@@ -3,12 +3,10 @@ package ru.practicum.shareit.user.model.dto;
 import lombok.Builder;
 import lombok.Data;
 import ru.practicum.shareit.OnCreate;
-import ru.practicum.shareit.item.model.Item;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import java.util.List;
 
 @Data
 @Builder

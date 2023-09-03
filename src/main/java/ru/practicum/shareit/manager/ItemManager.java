@@ -10,6 +10,7 @@ import ru.practicum.shareit.item.repo.ItemRepository;
 @AllArgsConstructor
 public class ItemManager {
     private final ItemRepository itemRepository;
+
     public Item findItemById(Long itemId) {
         return itemRepository.findById(itemId).orElseThrow(NotFoundException::new);
     }

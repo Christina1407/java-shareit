@@ -44,7 +44,7 @@ public class BookingController {
 
     @GetMapping("{bookingId}")
     public BookingDtoResponse findBookingById(@PathVariable("bookingId") @Min(1) Long bookingId,
-                                @RequestHeader(USER_ID) @NotNull @Min(1) Long userId) {
+                                              @RequestHeader(USER_ID) @NotNull @Min(1) Long userId) {
         return bookingService.findBookingById(bookingId, userId);
     }
 
@@ -53,9 +53,10 @@ public class BookingController {
                                                       @RequestParam(name = "state", defaultValue = "ALL") EnumState state) {
         return bookingService.findUsersBookings(bookerId, state);
     }
+
     @GetMapping("/owner")
     public List<BookingDtoResponse> findOwnersBookings(@RequestHeader(USER_ID) @NotNull @Min(1) Long ownerId,
-                                                      @RequestParam(name = "state", defaultValue = "ALL") EnumState state) {
+                                                       @RequestParam(name = "state", defaultValue = "ALL") EnumState state) {
         return bookingService.findOwnersBookings(ownerId, state);
     }
 }

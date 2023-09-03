@@ -3,7 +3,6 @@ package ru.practicum.shareit.user.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.manager.UserManager;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.model.dto.UserDto;
@@ -51,6 +50,7 @@ public class UserServiceImpl implements UserService {
         User user = userManager.findUserById(userId);
         return userMapper.map(user);
     }
+
     private void preUpdate(User userForUpdate, UserDto userDto) {
         if (Objects.nonNull(userDto.getName()) && !userDto.getName().isBlank()) { // если имя пустое, то оно не меняется
             userForUpdate.setName(userDto.getName());

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import ru.practicum.shareit.OnCreate;
+import ru.practicum.shareit.valid.StartBeforeEndDateValid;
 
 import javax.validation.constraints.Future;
 import javax.validation.constraints.FutureOrPresent;
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @Builder
+@StartBeforeEndDateValid
 public class BookingDtoRequest {
     @NotNull(message = "startDate is null", groups = OnCreate.class)
     @FutureOrPresent(message = "startDate can't be in past")
@@ -23,4 +25,4 @@ public class BookingDtoRequest {
     private Long bookerId;
     @NotNull(message = "itemId is null", groups = OnCreate.class)
     private Long itemId;
-   }
+}

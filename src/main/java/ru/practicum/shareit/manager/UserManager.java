@@ -10,6 +10,7 @@ import ru.practicum.shareit.user.repo.UserRepository;
 @AllArgsConstructor
 public class UserManager {
     private final UserRepository userRepository;
+
     public User findUserById(Long userId) {
         return userRepository.findById(userId).orElseThrow(NotFoundException::new);
     }

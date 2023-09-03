@@ -9,4 +9,5 @@ import java.util.List;
 public interface ItemRepository extends JpaRepository<Item, Long> {
     @Query("from Item as i where (lower(i.name) like lower(?1) or lower(i.description) like lower(?1)) and i.available is true")
     List<Item> searchItemsByNameAndDescription(String text);
+
 }

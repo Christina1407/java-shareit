@@ -35,11 +35,13 @@ public class ExceptionsHandler {
     public ExceptionResponse handleNotFoundException(final NotFoundException e) {
         return new ExceptionResponse("Искомый объект не найден");
     }
+
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handleNotAllowedException(final NotAllowedException e) {
         return new ExceptionResponse("Объект недоступен");
     }
+
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
     public ExceptionResponse handleAlreadyExistsException(final AlreadyExistsException e) {
