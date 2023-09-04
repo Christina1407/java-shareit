@@ -36,5 +36,5 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, Queryds
     @Query("FROM Booking b WHERE b.item.id in (?1) and ?2 BETWEEN b.startDate AND endDate")
     List<Booking> findCurrentOwnerBookings(List<Long> itemIds, LocalDateTime localDateTime);
 
-    List<Booking> findByItem_IdAndStatusInAndBooker_IdAndEndDateLessThanEqual(Long itemId, List<EnumStatus> status, Long bookerId, LocalDateTime localDateTime);
+    boolean existsByItem_IdAndStatusInAndBooker_IdAndEndDateLessThanEqual(Long itemId, List<EnumStatus> status, Long bookerId, LocalDateTime localDateTime);
 }

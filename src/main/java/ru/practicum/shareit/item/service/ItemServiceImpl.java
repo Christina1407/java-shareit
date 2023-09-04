@@ -4,7 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.booking.enums.EnumStatus;
 import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.repo.BookingRepository;
+import ru.practicum.shareit.exception.NotAllowedException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.comments.model.Comment;
 import ru.practicum.shareit.item.comments.model.dto.CommentDtoRequest;
@@ -17,11 +20,11 @@ import ru.practicum.shareit.item.model.dto.ItemDtoRequest;
 import ru.practicum.shareit.item.model.dto.ItemDtoResponse;
 import ru.practicum.shareit.item.model.dto.ItemMapper;
 import ru.practicum.shareit.item.repo.ItemRepository;
-import ru.practicum.shareit.manager.BookingManager;
 import ru.practicum.shareit.manager.ItemManager;
 import ru.practicum.shareit.manager.UserManager;
 import ru.practicum.shareit.user.model.User;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -37,8 +40,9 @@ public class ItemServiceImpl implements ItemService {
     private final CommentMapper commentMapper;
     private final UserManager userManager;
     private final ItemManager itemManager;
-    private final BookingManager bookingManager;
     private final CommentRepository commentRepository;
+    private final BookingRepository bookingRepository;
+    private final List<EnumStatus> closedStatuses = List.of(EnumStatus.CANCELED, EnumStatus.REJECTED);
 
     @Override
     public ItemDto saveItem(ItemDtoRequest itemDto, Long ownerId) {
@@ -51,7 +55,8 @@ public class ItemServiceImpl implements ItemService {
     public CommentDtoResponse saveComment(CommentDtoRequest commentDtoRequest, Long itemId, Long userId) {
         User user = userManager.findUserById(userId);
         Item item = itemManager.findItemById(itemId);
-        List<Booking> bookings = bookingManager.findBookingsByItemIdAndBookerId(itemId, userId);
+        //проверка, что у юзера есть завершившиеся бронирования этой вещи
+        existsPastBookingsByItemIdAndBookerId(itemId, userId);
         return commentMapper.map(commentRepository.save(commentMapper.map(commentDtoRequest, user, item)));
     }
 
@@ -75,34 +80,16 @@ public class ItemServiceImpl implements ItemService {
         Item item = itemManager.findItemById(itemId);
         List<CommentDtoResponse> comments = getComments(List.of(itemId));
         if (item.getOwner().getId().equals(userId)) {
-            return itemMapper.map(item, bookingManager.findLastBooking(item), bookingManager.findNextBooking(item), comments);
+            return itemMapper.map(item, findLastBooking(item), findNextBooking(item), comments);
         } else {
             return itemMapper.map(item, null, null, comments);
         }
-    }
-
-    private List<CommentDtoResponse> getComments(List<Long> itemIds) {
-        List<Comment> comments = commentRepository.findByItem_IdIn(itemIds, Sort.by(Sort.Direction.DESC, "createdDate"));
-        return commentMapper.map(comments);
     }
 
     @Override
     public List<ItemDtoResponse> findUsersItems(Long ownerId) {
         User user = userManager.findUserById(ownerId);
         return mapItemList(user);
-    }
-
-    private List<ItemDtoResponse> mapItemList(User user) {
-        List<ItemDtoResponse> responseList = new ArrayList<>();
-        List<CommentDtoResponse> comments = getComments(user.getItems().stream()
-                .map(Item::getId)
-                .collect(Collectors.toList()));
-        user.getItems().forEach(
-                item -> {
-                    responseList.add(itemMapper.map(item, bookingManager.findLastBooking(item), bookingManager.findNextBooking(item), comments));
-                }
-        );
-        return responseList;
     }
 
     @Override
@@ -114,6 +101,23 @@ public class ItemServiceImpl implements ItemService {
         return itemMapper.map(itemRepository.searchItemsByNameAndDescription("%" + text + "%"));
     }
 
+    private List<CommentDtoResponse> getComments(List<Long> itemIds) {
+        List<Comment> comments = commentRepository.findByItem_IdIn(itemIds, Sort.by(Sort.Direction.DESC, "createdDate"));
+        return commentMapper.map(comments);
+    }
+
+    private List<ItemDtoResponse> mapItemList(User user) {
+        List<ItemDtoResponse> responseList = new ArrayList<>();
+        List<CommentDtoResponse> comments = getComments(user.getItems().stream()
+                .map(Item::getId)
+                .collect(Collectors.toList()));
+        user.getItems().forEach(
+                item -> {
+                    responseList.add(itemMapper.map(item, findLastBooking(item), findNextBooking(item), comments));
+                }
+        );
+        return responseList;
+    }
 
     private Item preUpdate(User user, Item item) {
         Item itemForUpdate = user.getItems().stream()
@@ -128,4 +132,22 @@ public class ItemServiceImpl implements ItemService {
         return itemForUpdate;
     }
 
+    private Booking findNextBooking(Item item) {
+        return bookingRepository.findTopByItem_IdAndStartDateGreaterThanEqualAndStatusNotInOrderByStartDate(
+                item.getId(), LocalDateTime.now(), closedStatuses);
+    }
+
+    private Booking findLastBooking(Item item) {
+        return bookingRepository.findTopByItem_IdAndStartDateLessThanEqualAndStatusNotInOrderByStartDateDesc(
+                item.getId(), LocalDateTime.now(), closedStatuses);
+    }
+
+    private void existsPastBookingsByItemIdAndBookerId(Long itemId, Long bookerId) {
+        boolean exists = bookingRepository.existsByItem_IdAndStatusInAndBooker_IdAndEndDateLessThanEqual(
+                itemId, List.of(EnumStatus.APPROVED), bookerId, LocalDateTime.now());
+        if (!exists) {
+            log.error("Item id = {} doesn't have PAST bookings from user id = {}", itemId, bookerId);
+            throw new NotAllowedException();
+        }
+    }
 }
