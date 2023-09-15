@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,6 +12,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @Builder
+
 public class ItemDtoResponse {
 
     private final Long id;

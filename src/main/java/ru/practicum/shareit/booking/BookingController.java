@@ -2,6 +2,8 @@ package ru.practicum.shareit.booking;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.OnCreate;
@@ -47,13 +49,19 @@ public class BookingController {
 
     @GetMapping
     public List<BookingDtoResponse> findUsersBookings(@RequestHeader(USER_ID) @NotNull @Min(1) Long bookerId,
-                                                      @RequestParam(name = "state", defaultValue = "ALL") EnumState state) {
-        return bookingService.findUsersBookings(bookerId, state);
+                                                      @RequestParam(name = "state", defaultValue = "ALL") EnumState state,
+                                                      @RequestParam(name = "from", defaultValue = "0")  @Min(0) int from,
+                                                      @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
+        Pageable pageable = PageRequest.of(from / size, size);
+        return bookingService.findUsersBookings(bookerId, state, pageable);
     }
 
     @GetMapping("/owner")
     public List<BookingDtoResponse> findOwnersBookings(@RequestHeader(USER_ID) @NotNull @Min(1) Long ownerId,
-                                                       @RequestParam(name = "state", defaultValue = "ALL") EnumState state) {
-        return bookingService.findOwnersBookings(ownerId, state);
+                                                       @RequestParam(name = "state", defaultValue = "ALL") EnumState state,
+                                                       @RequestParam(name = "from", defaultValue = "0")  @Min(0) int from,
+                                                       @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
+        Pageable pageable = PageRequest.of(from / size, size);
+        return bookingService.findOwnersBookings(ownerId, state, pageable);
     }
 }

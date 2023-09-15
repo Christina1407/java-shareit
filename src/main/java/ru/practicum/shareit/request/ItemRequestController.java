@@ -7,9 +7,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.OnCreate;
-import ru.practicum.shareit.booking.enums.EnumState;
-import ru.practicum.shareit.request.dto.RequestDto;
-import ru.practicum.shareit.request.dto.RequestDtoResponse;
+import ru.practicum.shareit.request.model.dto.RequestDto;
+import ru.practicum.shareit.request.model.dto.RequestDtoResponse;
+import ru.practicum.shareit.request.service.RequestService;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -47,10 +47,10 @@ public class ItemRequestController {
     }
     @GetMapping("/all")
     public List<RequestDtoResponse> findRequests(@RequestHeader(USER_ID) @NotNull @Min(1) Long userId,
-                                                 @RequestParam(name = "from", defaultValue = "0") Long from,
-                                                 @RequestParam(name = "size", defaultValue = "10") Long size) {
-        Pageable pageable = PageRequest.of(Math.toIntExact(from / size), Math.toIntExact(size));
-        return requestService.findUsersRequests(userId);
+                                                 @RequestParam(name = "from", defaultValue = "0")  @Min(0) int from,
+                                                 @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
+        Pageable pageable = PageRequest.of(from / size, size);
+        return requestService.findRequests(userId, pageable);
     }
 
 }

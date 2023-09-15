@@ -23,4 +23,5 @@ public class ItemDtoRequest {
     private final String description;
     @NotNull(message = "available is null", groups = OnCreate.class)
     private final Boolean available;
+    private final Long requestId;
 }

@@ -3,6 +3,7 @@ package ru.practicum.shareit.booking.service;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.enums.EnumState;
 import ru.practicum.shareit.booking.enums.EnumStatus;
@@ -136,34 +137,34 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDtoResponse> findUsersBookings(Long userId, EnumState state) {
+    public List<BookingDtoResponse> findUsersBookings(Long userId, EnumState state, Pageable pageable) {
         userManager.findUserById(userId);
         List<Booking> bookings = new ArrayList<>();
         switch (state) {
             case ALL:
-                bookings = bookingRepository.findByBooker_IdOrderByStartDateDesc(userId);
+                bookings = bookingRepository.findByBooker_IdOrderByStartDateDesc(userId, pageable);
                 break;
             case PAST:
-                bookings = bookingRepository.findByBooker_IdAndEndDateLessThanEqualOrderByStartDateDesc(userId, LocalDateTime.now());
+                bookings = bookingRepository.findByBooker_IdAndEndDateLessThanEqualOrderByStartDateDesc(userId, LocalDateTime.now(), pageable);
                 break;
             case CURRENT:
-                bookings = bookingRepository.findCurrentBookings(userId, LocalDateTime.now());
+                bookings = bookingRepository.findCurrentBookings(userId, LocalDateTime.now(), pageable);
                 break;
             case FUTURE:
-                bookings = bookingRepository.findByBooker_IdAndStartDateGreaterThanEqualOrderByStartDateDesc(userId, LocalDateTime.now());
+                bookings = bookingRepository.findByBooker_IdAndStartDateGreaterThanEqualOrderByStartDateDesc(userId, LocalDateTime.now(), pageable);
                 break;
             case WAITING:
-                bookings = bookingRepository.findByBooker_IdAndStatusInOrderByStartDateDesc(userId, List.of(EnumStatus.WAITING));
+                bookings = bookingRepository.findByBooker_IdAndStatusInOrderByStartDateDesc(userId, List.of(EnumStatus.WAITING), pageable);
                 break;
             case REJECTED:
-                bookings = bookingRepository.findByBooker_IdAndStatusInOrderByStartDateDesc(userId, List.of(EnumStatus.REJECTED, EnumStatus.CANCELED));
+                bookings = bookingRepository.findByBooker_IdAndStatusInOrderByStartDateDesc(userId, List.of(EnumStatus.REJECTED, EnumStatus.CANCELED), pageable);
                 break;
         }
         return bookingMapper.map(bookings);
     }
 
     @Override
-    public List<BookingDtoResponse> findOwnersBookings(Long ownerId, EnumState state) {
+    public List<BookingDtoResponse> findOwnersBookings(Long ownerId, EnumState state, Pageable pageable) {
         User user = userManager.findUserById(ownerId);
         List<Item> items = user.getItems();
         if (items.isEmpty()) {
@@ -177,22 +178,22 @@ public class BookingServiceImpl implements BookingService {
 
         switch (state) {
             case ALL:
-                bookings = bookingRepository.findByItem_IdInOrderByStartDateDesc(itemsIds);
+                bookings = bookingRepository.findByItem_IdInOrderByStartDateDesc(itemsIds, pageable);
                 break;
             case PAST:
-                bookings = bookingRepository.findByItem_IdInAndEndDateLessThanEqualOrderByStartDateDesc(itemsIds, LocalDateTime.now());
+                bookings = bookingRepository.findByItem_IdInAndEndDateLessThanEqualOrderByStartDateDesc(itemsIds, LocalDateTime.now(), pageable);
                 break;
             case CURRENT:
-                bookings = bookingRepository.findCurrentOwnerBookings(itemsIds, LocalDateTime.now());
+                bookings = bookingRepository.findCurrentOwnerBookings(itemsIds, LocalDateTime.now(), pageable);
                 break;
             case FUTURE:
-                bookings = bookingRepository.findByItem_IdInAndStartDateGreaterThanEqualOrderByStartDateDesc(itemsIds, LocalDateTime.now());
+                bookings = bookingRepository.findByItem_IdInAndStartDateGreaterThanEqualOrderByStartDateDesc(itemsIds, LocalDateTime.now(), pageable);
                 break;
             case WAITING:
-                bookings = bookingRepository.findByItem_IdInAndStatusInOrderByStartDateDesc(itemsIds, List.of(EnumStatus.WAITING));
+                bookings = bookingRepository.findByItem_IdInAndStatusInOrderByStartDateDesc(itemsIds, List.of(EnumStatus.WAITING), pageable);
                 break;
             case REJECTED:
-                bookings = bookingRepository.findByItem_IdInAndStatusInOrderByStartDateDesc(itemsIds, List.of(EnumStatus.REJECTED, EnumStatus.CANCELED));
+                bookings = bookingRepository.findByItem_IdInAndStatusInOrderByStartDateDesc(itemsIds, List.of(EnumStatus.REJECTED, EnumStatus.CANCELED), pageable);
                 break;
         }
         return bookingMapper.map(bookings);
