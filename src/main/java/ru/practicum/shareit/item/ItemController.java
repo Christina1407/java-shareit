@@ -52,7 +52,7 @@ public class ItemController {
 
     @GetMapping
     public List<ItemDtoResponse> findUsersItems(@RequestHeader(USER_ID) @NotNull @Min(1) Long ownerId,
-                                                @RequestParam(name = "from", defaultValue = "0")  @Min(0) int from,
+                                                @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
                                                 @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
         Pageable pageable = PageRequest.of(from / size, size);
         return itemService.findUsersItems(ownerId, pageable);
@@ -61,7 +61,7 @@ public class ItemController {
     @GetMapping("/search")
     public List<ItemDto> searchItems(@RequestParam @NotNull String text,
                                      @RequestHeader(USER_ID) @NotNull @Min(1) Long renterId,
-                                     @RequestParam(name = "from", defaultValue = "0")  @Min(0) int from,
+                                     @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
                                      @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
         Pageable pageable = PageRequest.of(from / size, size);
         return itemService.searchItems(text, renterId, pageable);

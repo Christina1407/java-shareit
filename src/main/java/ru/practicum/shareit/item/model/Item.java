@@ -1,6 +1,5 @@
 package ru.practicum.shareit.item.model;
 
-import jdk.dynalink.linker.LinkerServices;
 import lombok.*;
 import ru.practicum.shareit.item.comments.model.Comment;
 import ru.practicum.shareit.request.model.Request;

@@ -6,10 +6,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.manager.UserManager;
-import ru.practicum.shareit.request.model.dto.RequestMapper;
+import ru.practicum.shareit.request.model.Request;
 import ru.practicum.shareit.request.model.dto.RequestDto;
 import ru.practicum.shareit.request.model.dto.RequestDtoResponse;
-import ru.practicum.shareit.request.model.Request;
+import ru.practicum.shareit.request.model.dto.RequestMapper;
 import ru.practicum.shareit.request.repo.RequestRepository;
 import ru.practicum.shareit.user.model.User;
 

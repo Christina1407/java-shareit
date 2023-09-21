@@ -1,4 +1,4 @@
-package ru.practicum.shareit.request.model.dto;
+package ru.practicum.shareit.unit.mapper;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,11 +9,14 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.model.dto.ItemDto;
 import ru.practicum.shareit.item.model.dto.ItemMapper;
 import ru.practicum.shareit.request.model.Request;
+import ru.practicum.shareit.request.model.dto.RequestDto;
+import ru.practicum.shareit.request.model.dto.RequestDtoResponse;
+import ru.practicum.shareit.request.model.dto.RequestMapper;
+import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -23,6 +26,7 @@ class RequestMapperTest {
     private RequestMapper requestMapper;
     @Mock
     private ItemMapper itemMapper;
+
     @BeforeEach
     void setUp() {
         requestMapper = new RequestMapper(itemMapper);
@@ -48,7 +52,6 @@ class RequestMapperTest {
         assertThat(requestDtoResponse.getItems()).isNull();
         assertThat(requestDtoResponse.getDescription()).isEqualTo("test");
         assertThat(requestDtoResponse.getId()).isEqualTo(1L);
-
         //before
         List<ItemDto> itemDtoList = new ArrayList<>();
         when(itemMapper.map(itemList)).thenReturn(itemDtoList);
@@ -57,5 +60,21 @@ class RequestMapperTest {
         //then
         verify(itemMapper, only()).map(request.getItems());
         assertThat(requestDtoResponse2.getItems()).isEqualTo(itemDtoList);
+    }
+
+    @Test
+    void shouldBeSuccessfullyMapRequest() {
+        //before
+        RequestDto requestDto = new RequestDto();
+        User user = new User();
+        requestDto.setDescription("test");
+        //when
+        Request request = requestMapper.map(requestDto, user);
+        //then
+        assertThat(request).isNotNull();
+        assertThat(request.getDescription()).isEqualTo("test");
+        assertThat(request.getRequester()).isEqualTo(user);
+        assertThat(request.getCreatedDate()).isNull();
+        assertThat(request.getId()).isNull();
     }
 }

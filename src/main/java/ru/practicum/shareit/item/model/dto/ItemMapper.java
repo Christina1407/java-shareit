@@ -52,7 +52,7 @@ public class ItemMapper {
                 .description(item.getDescription())
                 .available(item.getAvailable())
                 .build();
-        if(Objects.nonNull(item.getRequest())) {
+        if (Objects.nonNull(item.getRequest())) {
             itemDto.setRequestId(item.getRequest().getId());
         }
         return itemDto;

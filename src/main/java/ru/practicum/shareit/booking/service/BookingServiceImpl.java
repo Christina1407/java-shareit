@@ -37,11 +37,11 @@ public class BookingServiceImpl implements BookingService {
     private final ItemManager itemManager;
 
     @Override
-    public BookingDtoResponse saveBooking(BookingDtoRequest bookingDtoRequest, Long ownerId) {
-        User user = userManager.findUserById(ownerId);
+    public BookingDtoResponse saveBooking(BookingDtoRequest bookingDtoRequest, Long userId) {
+        User user = userManager.findUserById(userId);
         Item item = itemManager.findItemById(bookingDtoRequest.getItemId());
         if (item.getAvailable()) {
-            if (!item.getOwner().getId().equals(ownerId)) {
+            if (!item.getOwner().getId().equals(userId)) {
                 //проверяем пересечение по времени с другими подтверждёнными бронированиями на эту вещь
                 BooleanExpression intersectionDate = isIntersection(bookingDtoRequest.getStart(), bookingDtoRequest.getEnd(),
                         item, EnumStatus.APPROVED, null);
@@ -55,7 +55,7 @@ public class BookingServiceImpl implements BookingService {
                     throw new NotAllowedException();
                 }
             } else {
-                log.error("Вещь id = {} не может быть забронирована владельцем вещи  userId = {}", item.getId(), ownerId);
+                log.error("Вещь id = {} не может быть забронирована владельцем вещи  userId = {}", item.getId(), userId);
                 throw new NotFoundException();
             }
         } else {
@@ -81,10 +81,8 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public BookingDtoResponse approveOrRejectBooking(Long bookingId, Long userId, Boolean approved) {
-        userManager.findUserById(userId);
+    public BookingDtoResponse approveOrRejectBooking(Long bookingId, Long userId, boolean approved) {
         Booking booking = getBooking(bookingId, userId);// если юзер не owner или booker, выдается ошибка
-        Item item = itemManager.findItemById(booking.getItem().getId());
 
         if (booking.getStatus().equals(EnumStatus.WAITING)) {
             if (booking.getBooker().getId().equals(userId)) {
@@ -100,7 +98,7 @@ public class BookingServiceImpl implements BookingService {
             } else {
                 if (approved) {
                     //находим бронирования для данной вещи со статусом WAITING, которые пересекаются по времени, и отменяем их
-                    BooleanExpression intersectionDate = isIntersection(booking.getStartDate(), booking.getEndDate(), item,
+                    BooleanExpression intersectionDate = isIntersection(booking.getStartDate(), booking.getEndDate(), booking.getItem(),
                             EnumStatus.WAITING, bookingId);
                     Iterable<Booking> bookings = bookingRepository.findAll(intersectionDate);
                     bookings.forEach(b -> b.setStatus(EnumStatus.REJECTED));

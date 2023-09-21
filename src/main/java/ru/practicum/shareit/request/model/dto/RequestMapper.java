@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class RequestMapper {
     private final ItemMapper itemMapper;
+
     public List<RequestDtoResponse> map(List<Request> requests, boolean needItems) {
         return requests.stream()
                 .map(request -> getBuild(request, needItems))

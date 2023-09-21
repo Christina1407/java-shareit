@@ -1,6 +1,5 @@
 package ru.practicum.shareit.item.model.dto;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

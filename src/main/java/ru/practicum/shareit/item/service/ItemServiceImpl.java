@@ -108,10 +108,8 @@ public class ItemServiceImpl implements ItemService {
     private List<ItemDtoResponse> mapItemList(List<Item> items) {
         List<ItemDtoResponse> responseList = new ArrayList<>();
         items.forEach(
-                item -> {
-                    responseList.add(itemMapper.map(item, findLastBooking(item), findNextBooking(item),
-                            commentMapper.map(item.getComments())));
-                }
+                item -> responseList.add(itemMapper.map(item, findLastBooking(item), findNextBooking(item),
+                        commentMapper.map(item.getComments())))
         );
         return responseList;
     }
