@@ -114,7 +114,7 @@ class ItemMapperTest {
     @Test
     void shouldBeSuccessfullyMapItem() {
         //before
-        ItemDtoRequest itemDtoRequest = new ItemDtoRequest(1L, "name", "description",false, null);
+        ItemDtoRequest itemDtoRequest = new ItemDtoRequest(1L, "name", "description", false, null);
         User user = new User();
         Request request = new Request();
 

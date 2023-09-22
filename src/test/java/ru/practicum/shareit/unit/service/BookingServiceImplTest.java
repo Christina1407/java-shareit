@@ -8,7 +8,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.crossstore.ChangeSetPersister;
+import org.springframework.data.domain.Pageable;
+import ru.practicum.shareit.booking.enums.EnumState;
 import ru.practicum.shareit.booking.enums.EnumStatus;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.dto.BookingDtoRequest;
@@ -25,6 +26,8 @@ import ru.practicum.shareit.manager.UserManager;
 import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,6 +53,9 @@ class BookingServiceImplTest {
     @Captor
     ArgumentCaptor<Booking> bookingArgumentCaptor;
 
+    @Captor
+    ArgumentCaptor<List<Long>> items;
+
     @BeforeEach
     void setUp() {
         bookingService = new BookingServiceImpl(bookingRepository, bookingMapper, userManager, itemManager);
@@ -60,7 +66,7 @@ class BookingServiceImplTest {
         //before
         LocalDateTime start = LocalDateTime.now();
         LocalDateTime end = LocalDateTime.now().plusDays(1);
-        BookingDtoRequest bookingDtoRequest = new BookingDtoRequest(start, end, 5L, 10L);
+        BookingDtoRequest bookingDtoRequest = new BookingDtoRequest(start, end, 10L);
         Long userId = 1L;
         User user = new User();
 
@@ -124,28 +130,40 @@ class BookingServiceImplTest {
 
     @Test
     void approveOrRejectBookingByItemOwner() {
-        // FIXME доделать
-//        //before
-//        Long bookingId = 1L;
-//        Long userId = 2L;
-//        boolean approved = true;
-//
-//        Booking booking = new Booking();
-//        User booker = new User();
-//        booker.setId(2L);
-//        booking.setBooker(booker);
-//        booking.setStatus(EnumStatus.WAITING);
-//
-//        Item item = new Item();
-//        User itemOwner = new User();
-//        itemOwner.setId(1L);
-//        item.setOwner(itemOwner);
-//        booking.setItem(item);
-//        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
-//        //when
-//        bookingService.approveOrRejectBooking(bookingId, userId, approved);
-//        //then
-//        verify(userManager, only()).findUserById(userId);
+        //before
+        Long bookingId = 1L;
+        Long userId = 1L;
+        boolean approved = true;
+
+        Booking booking = new Booking();
+        User booker = new User();
+        booker.setId(2L);
+        booking.setBooker(booker);
+        booking.setStatus(EnumStatus.WAITING);
+        booking.setStartDate(LocalDateTime.now());
+        booking.setEndDate(LocalDateTime.now().plusDays(1));
+
+        Item item = new Item();
+        User itemOwner = new User();
+        itemOwner.setId(1L);
+        item.setOwner(itemOwner);
+        item.setId(1L);
+        booking.setItem(item);
+        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
+        Booking firstBook = new Booking();
+        Booking secondBook = new Booking();
+        Iterable<Booking> bookings = new ArrayList<>(List.of(firstBook, secondBook));
+        when(bookingRepository.findAll((Predicate) any())).thenReturn(bookings);
+        //when
+        BookingDtoResponse result = bookingService.approveOrRejectBooking(bookingId, userId, approved);
+        //then
+        verify(bookingRepository, times(1)).save(booking);
+        verify(bookingMapper, only()).map(bookingArgumentCaptor.capture());
+        Booking finalBooking = bookingArgumentCaptor.getValue();
+        assertThat(booking).isEqualTo(finalBooking);
+        assertThat(finalBooking.getStatus()).isEqualTo(EnumStatus.APPROVED);
+        bookings.forEach(booking1 -> assertThat(booking1.getStatus()).isEqualTo(EnumStatus.REJECTED));
+//        assertThat(bookingDtoResponse).isEqualTo(result);
     }
 
     @Test
@@ -174,7 +192,7 @@ class BookingServiceImplTest {
         verify(userManager, only()).findUserById(userId);
 
         //before
-        BookingDtoResponse bookingDtoResponse = new BookingDtoResponse(null, null, null, null, null,null);
+        BookingDtoResponse bookingDtoResponse = new BookingDtoResponse(null, null, null, null, null, null);
         when(bookingMapper.map(booking)).thenReturn(bookingDtoResponse);
         //when
         BookingDtoResponse result = bookingService.approveOrRejectBooking(bookingId, userId, false);
@@ -242,8 +260,7 @@ class BookingServiceImplTest {
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
         //when
         assertThatThrownBy(() -> bookingService.approveOrRejectBooking(bookingId, userId, true))
-                .isInstanceOf(NotAllowedException.class)
-                .hasMessage(null);
+                .isInstanceOf(NotAllowedException.class);
         //then
         verify(userManager, only()).findUserById(userId);
     }
@@ -257,6 +274,48 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void findOwnersBookings() {
+    void findOwnersBookingsWithoutItems() {
+        //before
+        Long ownerId = 1L;
+        EnumState enumState = EnumState.ALL;
+        Pageable pageable = Pageable.ofSize(1);
+
+        User user = new User();
+        user.setItems(new ArrayList<>());
+        when(userManager.findUserById(ownerId)).thenReturn(user);
+        //when
+        assertThatThrownBy(() -> bookingService.findOwnersBookings(ownerId, enumState, pageable))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void findOwnersBookingsSuccess() {
+        //before
+        Long ownerId = 1L;
+        EnumState enumState = EnumState.ALL;
+        Pageable pageable = Pageable.ofSize(1);
+
+        User user = new User();
+        Item item1 = new Item();
+        item1.setId(101L);
+        Item item2 = new Item();
+        item2.setId(102L);
+        user.setItems(new ArrayList<>(List.of(item1, item2)));
+        when(userManager.findUserById(ownerId)).thenReturn(user);
+        List<Booking> bookings = new ArrayList<>();
+        when(bookingRepository.findByItem_IdInOrderByStartDateDesc(any(), eq(pageable))).thenReturn(bookings);
+        List<BookingDtoResponse> responseList = new ArrayList<>();
+        when(bookingMapper.map(bookings)).thenReturn(responseList);
+        //when
+        List<BookingDtoResponse> ownersBookings = bookingService.findOwnersBookings(ownerId, enumState, pageable);
+        //then
+        assertThat(responseList).isEqualTo(ownersBookings);
+        verify(bookingRepository, only()).findByItem_IdInOrderByStartDateDesc(items.capture(), eq(pageable));
+        assertThat(2).isEqualTo(items.getValue().size());
+        List<Long> longList = items.getValue();
+        assertThat(new ArrayList<>(List.of(101L, 102L)))
+                .usingRecursiveComparison()
+                .isEqualTo(longList);
+        verify(bookingMapper, only()).map(bookings);
     }
 }

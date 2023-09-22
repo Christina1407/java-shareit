@@ -12,7 +12,7 @@ import java.util.List;
 public interface ItemService {
     ItemDto saveItem(ItemDtoRequest itemDto, Long ownerId);
 
-    ItemDto updateItem(ItemDtoRequest itemDto, Long ownerId);
+    ItemDto updateItem(ItemDtoRequest itemDto, Long userId);
 
     ItemDtoResponse findItemById(Long itemId, Long userId);
 

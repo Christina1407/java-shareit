@@ -19,7 +19,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, Queryds
 
     List<Booking> findByBooker_IdAndEndDateLessThanEqualOrderByStartDateDesc(Long userId, LocalDateTime localDateTime, Pageable pageable);
 
-    @Query("FROM Booking b WHERE b.booker.id = ?1 and ?2 BETWEEN b.startDate AND endDate")
+    @Query("FROM Booking b WHERE b.booker.id = ?1 and ?2 BETWEEN b.startDate AND endDate order by b.startDate DESC")
     List<Booking> findCurrentBookings(Long userId, LocalDateTime localDateTime, Pageable pageable);
 
     List<Booking> findByItem_IdInAndStatusInOrderByStartDateDesc(List<Long> itemIds, List<EnumStatus> status, Pageable pageable);
@@ -34,7 +34,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, Queryds
 
     Booking findTopByItem_IdAndStartDateLessThanEqualAndStatusNotInOrderByStartDateDesc(Long itemId, LocalDateTime localDateTime, List<EnumStatus> status);
 
-    @Query("FROM Booking b WHERE b.item.id in (?1) and ?2 BETWEEN b.startDate AND endDate")
+    @Query("FROM Booking b WHERE b.item.id in (?1) and ?2 BETWEEN b.startDate AND endDate order by b.startDate DESC")
     List<Booking> findCurrentOwnerBookings(List<Long> itemIds, LocalDateTime localDateTime, Pageable pageable);
 
     boolean existsByItem_IdAndStatusInAndBooker_IdAndEndDateLessThanEqual(Long itemId, List<EnumStatus> status, Long bookerId, LocalDateTime localDateTime);

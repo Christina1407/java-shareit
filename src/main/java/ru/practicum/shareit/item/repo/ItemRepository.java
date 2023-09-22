@@ -9,7 +9,7 @@ import ru.practicum.shareit.item.model.Item;
 import java.util.List;
 
 public interface ItemRepository extends JpaRepository<Item, Long> {
-    @Query("from Item as i where (lower(i.name) like lower(?1) or lower(i.description) like lower(?1)) and i.available is true")
+    @Query("from Item as i where (lower(i.name) like lower(?1) or lower(i.description) like lower(?1)) and i.available is true order by i.id")
     List<Item> searchItemsByNameAndDescription(String text, Pageable pageable);
 
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, value = "item_comments")

@@ -22,7 +22,6 @@ public class BookingDtoRequest {
     @NotNull(message = "endDate is null", groups = OnCreate.class)
     @Future(message = "endDate can't be in past")
     private LocalDateTime end;
-    private Long bookerId;
     @NotNull(message = "itemId is null", groups = OnCreate.class)
     private Long itemId;
 }

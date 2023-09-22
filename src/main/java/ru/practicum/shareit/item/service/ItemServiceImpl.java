@@ -46,13 +46,13 @@ public class ItemServiceImpl implements ItemService {
     private final List<EnumStatus> closedStatuses = List.of(EnumStatus.CANCELED, EnumStatus.REJECTED);
 
     @Override
-    public ItemDto saveItem(ItemDtoRequest itemDto, Long ownerId) {
+    public ItemDto saveItem(ItemDtoRequest itemDtoRequest, Long ownerId) {
         User user = userManager.findUserById(ownerId);
         Request request = null;
-        if (Objects.nonNull(itemDto.getRequestId())) {
-            request = requestRepository.findById(itemDto.getRequestId()).orElseThrow(NotFoundException::new);
+        if (Objects.nonNull(itemDtoRequest.getRequestId())) {
+            request = requestRepository.findById(itemDtoRequest.getRequestId()).orElseThrow(NotFoundException::new);
         }
-        Item item = itemMapper.map(itemDto, user, request);
+        Item item = itemMapper.map(itemDtoRequest, user, request);
         return itemMapper.map(itemRepository.save(item));
     }
 
@@ -66,12 +66,12 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ItemDto updateItem(ItemDtoRequest itemDto, Long ownerId) {
+    public ItemDto updateItem(ItemDtoRequest itemDto, Long userId) {
         //проверка, что айдишники существующих юзера и вещи
-        User user = userManager.findUserById(ownerId);
+        User user = userManager.findUserById(userId);
         itemManager.findItemById(itemDto.getId());
         if (user.getItems().stream().noneMatch(item -> item.getId().equals(itemDto.getId()))) {
-            log.error("Редактировать вещь может только её владелец. Пользователь c id = {} не владелец вещи {}", ownerId, itemDto);
+            log.error("Редактировать вещь может только её владелец. Пользователь c id = {} не владелец вещи {}", userId, itemDto);
             throw new NotFoundException();
         }
         Item item = itemMapper.map(itemDto, user, null);
