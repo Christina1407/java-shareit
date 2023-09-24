@@ -1,5 +1,6 @@
 package ru.practicum.shareit.unit.mapper;
 
+import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +31,29 @@ class RequestMapperTest {
     @BeforeEach
     void setUp() {
         requestMapper = new RequestMapper(itemMapper);
+    }
+
+    @Test
+    void shouldBeSuccessfullyMapRequestList() {
+        //before
+        List<Request> requestList = Instancio.ofList(Request.class)
+                .size(2)
+                .create();
+        List<ItemDto> itemDtoList = Instancio.ofList(ItemDto.class)
+                        .size(3)
+                                .create();
+        when(itemMapper.map(requestList.get(0).getItems())).thenReturn(itemDtoList);
+        when(itemMapper.map(requestList.get(1).getItems())).thenReturn(itemDtoList);
+        //when
+        List<RequestDtoResponse> mapped = requestMapper.map(requestList, true);
+        //then
+        assertThat(mapped.size()).isEqualTo(2);
+        for (int i = 0; i < mapped.size(); i++) {
+            assertThat(mapped.get(i).getId()).isEqualTo(requestList.get(i).getId());
+            assertThat(mapped.get(i).getCreated()).isEqualTo(requestList.get(i).getCreatedDate());
+            assertThat(mapped.get(i).getDescription()).isEqualTo(requestList.get(i).getDescription());
+            assertThat(mapped.get(i).getItems().size()).isEqualTo(3);
+        }
     }
 
     @Test

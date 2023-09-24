@@ -1,5 +1,6 @@
 package ru.practicum.shareit.unit.mapper;
 
+import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +27,24 @@ class ItemMapperTest {
     @BeforeEach
     void setUp() {
         itemMapper = new ItemMapper();
+    }
+
+    @Test
+    void shouldBeSuccessfullyMapItemList() {
+        //before
+        List<Item> itemList = Instancio.ofList(Item.class)
+                .size(2)
+                .create();
+        //when
+        List<ItemDto> mapped = itemMapper.map(itemList);
+        //then
+        assertThat(mapped.size()).isEqualTo(2);
+        for (int i = 0; i < mapped.size(); i++) {
+            assertThat(mapped.get(i).getId()).isEqualTo(itemList.get(i).getId());
+            assertThat(mapped.get(i).getName()).isEqualTo(itemList.get(i).getName());
+            assertThat(mapped.get(i).getDescription()).isEqualTo(itemList.get(i).getDescription());
+            assertThat(mapped.get(i).getRequestId()).isEqualTo(itemList.get(i).getRequest().getId());
+        }
     }
 
     @Test

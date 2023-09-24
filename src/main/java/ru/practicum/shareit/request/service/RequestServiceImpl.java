@@ -1,6 +1,6 @@
 package ru.practicum.shareit.request.service;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,7 +16,7 @@ import ru.practicum.shareit.user.model.User;
 import java.util.List;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 public class RequestServiceImpl implements RequestService {
     private final RequestRepository requestRepository;

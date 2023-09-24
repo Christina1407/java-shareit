@@ -13,6 +13,8 @@ import ru.practicum.shareit.booking.model.dto.BookingMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
@@ -22,6 +24,22 @@ class BookingMapperTest {
     @BeforeEach
     void setUp() {
         bookingMapper = new BookingMapper();
+    }
+
+    @Test
+    void shouldBeSuccessfullyMapBookingList() {
+        //before
+        List<Booking> bookingList = Instancio.ofList(Booking.class)
+                .size(2)
+                .create();
+        //when
+        List<BookingDtoResponse> mapped = bookingMapper.map(bookingList);
+        //then
+        assertThat(mapped.size()).isEqualTo(2);
+        for (int i = 0; i < mapped.size(); i++) {
+            assertThat(mapped.get(i).getId()).isEqualTo(bookingList.get(i).getId());
+            assertThat(mapped.get(i).getStatus().name()).isEqualTo(bookingList.get(i).getStatus().name());
+        }
     }
 
     @Test

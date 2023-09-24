@@ -46,7 +46,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void saveBooking() {
+    void saveBookingWithTimeIntersection() {
         //before
         //Создаем владельца вещи
         User user = new User();

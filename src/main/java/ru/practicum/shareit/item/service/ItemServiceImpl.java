@@ -1,6 +1,6 @@
 package ru.practicum.shareit.item.service;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,7 +32,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
@@ -66,16 +66,18 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ItemDto updateItem(ItemDtoRequest itemDto, Long userId) {
+    public ItemDto updateItem(ItemDtoRequest itemDtoRequest, Long userId) {
         //проверка, что айдишники существующих юзера и вещи
         User user = userManager.findUserById(userId);
-        itemManager.findItemById(itemDto.getId());
-        if (user.getItems().stream().noneMatch(item -> item.getId().equals(itemDto.getId()))) {
-            log.error("Редактировать вещь может только её владелец. Пользователь c id = {} не владелец вещи {}", userId, itemDto);
-            throw new NotFoundException();
-        }
-        Item item = itemMapper.map(itemDto, user, null);
-        Item itemForUpdate = preUpdate(user, item);
+        itemManager.findItemById(itemDtoRequest.getId());
+        Item itemForUpdate = user.getItems().stream()
+                .filter(i -> i.getId().equals(itemDtoRequest.getId()))
+                .findFirst()
+                .orElseThrow(() -> {
+                    log.error("Редактировать вещь может только её владелец. Пользователь c id = {} не владелец вещи {}", userId, itemDtoRequest);
+                    return new NotFoundException();
+                });
+        preUpdate(itemForUpdate, itemDtoRequest);
         return itemMapper.map(itemRepository.save(itemForUpdate));
     }
 
@@ -114,17 +116,13 @@ public class ItemServiceImpl implements ItemService {
         return responseList;
     }
 
-    private Item preUpdate(User user, Item item) {
-        Item itemForUpdate = user.getItems().stream()
-                .filter(i -> i.getId().equals(item.getId()))
-                .findFirst()
-                .orElseThrow();
-        if (Objects.nonNull(item.getName()) && !item.getName().isBlank()) { // если имя пустое, то оно не изменится
-            itemForUpdate.setName(item.getName());
+    private void preUpdate(Item itemForUpdate, ItemDtoRequest itemDtoRequest) {
+        if (Objects.nonNull(itemDtoRequest.getName()) && !itemDtoRequest.getName().isBlank()) { // если имя пустое, то оно не изменится
+            itemForUpdate.setName(itemDtoRequest.getName());
         }
-        Optional.ofNullable(item.getDescription()).ifPresent(description -> itemForUpdate.setDescription(item.getDescription())); //описание может быть пустым
-        Optional.ofNullable(item.getAvailable()).ifPresent(available -> itemForUpdate.setAvailable(item.getAvailable()));
-        return itemForUpdate;
+        Optional.ofNullable(itemDtoRequest.getDescription()).ifPresent(description -> itemForUpdate.setDescription(itemDtoRequest.getDescription())); //описание может быть пустым
+        Optional.ofNullable(itemDtoRequest.getAvailable()).ifPresent(available -> itemForUpdate.setAvailable(itemDtoRequest.getAvailable()));
+        ;
     }
 
     private Booking findNextBooking(Item item) {

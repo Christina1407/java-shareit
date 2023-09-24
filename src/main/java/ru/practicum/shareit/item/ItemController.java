@@ -37,11 +37,11 @@ public class ItemController {
 
     @PatchMapping("{itemId}")
     public ItemDto update(@PathVariable("itemId") @Min(1) Long itemId,
-                          @RequestBody ItemDtoRequest itemDto,
+                          @RequestBody ItemDtoRequest itemDtoRequest,
                           @RequestHeader(USER_ID) @NotNull @Min(1) Long userId) {
         log.info("Попытка обновления item id = {}", itemId);
-        itemDto.setId(itemId);
-        return itemService.updateItem(itemDto, userId);
+        itemDtoRequest.setId(itemId);
+        return itemService.updateItem(itemDtoRequest, userId);
     }
 
     @GetMapping("{itemId}")

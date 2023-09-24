@@ -1,6 +1,7 @@
 package ru.practicum.shareit.unit.service;
 
 import com.querydsl.core.types.Predicate;
+import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -8,6 +9,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import ru.practicum.shareit.booking.enums.EnumState;
 import ru.practicum.shareit.booking.enums.EnumStatus;
@@ -52,9 +54,6 @@ class BookingServiceImplTest {
 
     @Captor
     ArgumentCaptor<Booking> bookingArgumentCaptor;
-
-    @Captor
-    ArgumentCaptor<List<Long>> items;
 
     @BeforeEach
     void setUp() {
@@ -267,10 +266,125 @@ class BookingServiceImplTest {
 
     @Test
     void findBookingById() {
+        //before
+        //Создаём входную модель
+        Booking booking = Instancio.create(Booking.class);
+        when(bookingRepository.findById(booking.getId())).thenReturn(Optional.of(booking));
+        BookingDtoResponse bookingDtoResponse = Instancio.create(BookingDtoResponse.class);
+        when(bookingMapper.map(booking)).thenReturn(bookingDtoResponse);
+        //when
+        BookingDtoResponse result = bookingService.findBookingById(booking.getId(), booking.getBooker().getId());
+        //then
+        assertThat(result).isEqualTo(bookingDtoResponse);
+        verify(bookingMapper, only()).map(booking);
     }
 
     @Test
-    void findUsersBookings() {
+    void findUsersBookingsAll() {
+        //before
+        Long userId = 1L;
+        EnumState state = EnumState.ALL;
+        Pageable pageable = PageRequest.of(0, 10);
+        List<Booking> bookingList = new ArrayList<>();
+        List<BookingDtoResponse> responseList = new ArrayList<>();
+        when(bookingRepository.findByBooker_IdOrderByStartDateDesc(eq(userId), eq(pageable))).thenReturn(bookingList);
+        when(bookingMapper.map(bookingList)).thenReturn(responseList);
+        //when
+        List<BookingDtoResponse> usersBookings = bookingService.findUsersBookings(userId, state, pageable);
+        //then
+        assertThat(usersBookings).isEqualTo(responseList);
+        verify(bookingRepository, only()).findByBooker_IdOrderByStartDateDesc(userId, pageable);
+        verify(userManager, only()).findUserById(userId);
+    }
+
+    @Test
+    void findUsersBookingsPast() {
+        //before
+        Long userId = 1L;
+        EnumState state = EnumState.PAST;
+        Pageable pageable = PageRequest.of(0, 10);
+        List<Booking> bookingList = new ArrayList<>();
+        List<BookingDtoResponse> responseList = new ArrayList<>();
+        when(bookingRepository.findByBooker_IdAndEndDateLessThanEqualOrderByStartDateDesc(eq(userId), any(), eq(pageable))).thenReturn(bookingList);
+        when(bookingMapper.map(bookingList)).thenReturn(responseList);
+        //when
+        List<BookingDtoResponse> usersBookings = bookingService.findUsersBookings(userId, state, pageable);
+        //then
+        assertThat(usersBookings).isEqualTo(responseList);
+        verify(bookingRepository, only()).findByBooker_IdAndEndDateLessThanEqualOrderByStartDateDesc(eq(userId), any(), eq(pageable));
+        verify(userManager, only()).findUserById(userId);
+    }
+
+    @Test
+    void findUsersBookingsCurrent() {
+        //before
+        Long userId = 1L;
+        EnumState state = EnumState.CURRENT;
+        Pageable pageable = PageRequest.of(0, 10);
+        List<Booking> bookingList = new ArrayList<>();
+        List<BookingDtoResponse> responseList = new ArrayList<>();
+        when(bookingRepository.findCurrentBookings(eq(userId), any(), eq(pageable))).thenReturn(bookingList);
+        when(bookingMapper.map(bookingList)).thenReturn(responseList);
+        //when
+        List<BookingDtoResponse> usersBookings = bookingService.findUsersBookings(userId, state, pageable);
+        //then
+        assertThat(usersBookings).isEqualTo(responseList);
+        verify(bookingRepository, only()).findCurrentBookings(eq(userId), any(), eq(pageable));
+        verify(userManager, only()).findUserById(userId);
+    }
+
+    @Test
+    void findUsersBookingsFuture() {
+        //before
+        Long userId = 1L;
+        EnumState state = EnumState.FUTURE;
+        Pageable pageable = PageRequest.of(0, 10);
+        List<Booking> bookingList = new ArrayList<>();
+        List<BookingDtoResponse> responseList = new ArrayList<>();
+        when(bookingRepository.findByBooker_IdAndStartDateGreaterThanEqualOrderByStartDateDesc(eq(userId), any(), eq(pageable))).thenReturn(bookingList);
+        when(bookingMapper.map(bookingList)).thenReturn(responseList);
+        //when
+        List<BookingDtoResponse> usersBookings = bookingService.findUsersBookings(userId, state, pageable);
+        //then
+        assertThat(usersBookings).isEqualTo(responseList);
+        verify(bookingRepository, only()).findByBooker_IdAndStartDateGreaterThanEqualOrderByStartDateDesc(eq(userId), any(), eq(pageable));
+        verify(userManager, only()).findUserById(userId);
+    }
+
+    @Test
+    void findUsersBookingsWaiting() {
+        //before
+        Long userId = 1L;
+        EnumState state = EnumState.WAITING;
+        Pageable pageable = PageRequest.of(0, 10);
+        List<Booking> bookingList = new ArrayList<>();
+        List<BookingDtoResponse> responseList = new ArrayList<>();
+        when(bookingRepository.findByBooker_IdAndStatusInOrderByStartDateDesc(eq(userId), eq(List.of(EnumStatus.WAITING)), eq(pageable))).thenReturn(bookingList);
+        when(bookingMapper.map(bookingList)).thenReturn(responseList);
+        //when
+        List<BookingDtoResponse> usersBookings = bookingService.findUsersBookings(userId, state, pageable);
+        //then
+        assertThat(usersBookings).isEqualTo(responseList);
+        verify(bookingRepository, only()).findByBooker_IdAndStatusInOrderByStartDateDesc(eq(userId), eq(List.of(EnumStatus.WAITING)), eq(pageable));
+        verify(userManager, only()).findUserById(userId);
+    }
+
+    @Test
+    void findUsersBookingsRejected() {
+        //before
+        Long userId = 1L;
+        EnumState state = EnumState.REJECTED;
+        Pageable pageable = PageRequest.of(0, 10);
+        List<Booking> bookingList = new ArrayList<>();
+        List<BookingDtoResponse> responseList = new ArrayList<>();
+        when(bookingRepository.findByBooker_IdAndStatusInOrderByStartDateDesc(eq(userId), eq(List.of(EnumStatus.REJECTED, EnumStatus.CANCELED)), eq(pageable))).thenReturn(bookingList);
+        when(bookingMapper.map(bookingList)).thenReturn(responseList);
+        //when
+        List<BookingDtoResponse> usersBookings = bookingService.findUsersBookings(userId, state, pageable);
+        //then
+        assertThat(usersBookings).isEqualTo(responseList);
+        verify(bookingRepository, only()).findByBooker_IdAndStatusInOrderByStartDateDesc(eq(userId), eq(List.of(EnumStatus.REJECTED, EnumStatus.CANCELED)), eq(pageable));
+        verify(userManager, only()).findUserById(userId);
     }
 
     @Test
@@ -286,36 +400,5 @@ class BookingServiceImplTest {
         //when
         assertThatThrownBy(() -> bookingService.findOwnersBookings(ownerId, enumState, pageable))
                 .isInstanceOf(NotFoundException.class);
-    }
-
-    @Test
-    void findOwnersBookingsSuccess() {
-        //before
-        Long ownerId = 1L;
-        EnumState enumState = EnumState.ALL;
-        Pageable pageable = Pageable.ofSize(1);
-
-        User user = new User();
-        Item item1 = new Item();
-        item1.setId(101L);
-        Item item2 = new Item();
-        item2.setId(102L);
-        user.setItems(new ArrayList<>(List.of(item1, item2)));
-        when(userManager.findUserById(ownerId)).thenReturn(user);
-        List<Booking> bookings = new ArrayList<>();
-        when(bookingRepository.findByItem_IdInOrderByStartDateDesc(any(), eq(pageable))).thenReturn(bookings);
-        List<BookingDtoResponse> responseList = new ArrayList<>();
-        when(bookingMapper.map(bookings)).thenReturn(responseList);
-        //when
-        List<BookingDtoResponse> ownersBookings = bookingService.findOwnersBookings(ownerId, enumState, pageable);
-        //then
-        assertThat(responseList).isEqualTo(ownersBookings);
-        verify(bookingRepository, only()).findByItem_IdInOrderByStartDateDesc(items.capture(), eq(pageable));
-        assertThat(2).isEqualTo(items.getValue().size());
-        List<Long> longList = items.getValue();
-        assertThat(new ArrayList<>(List.of(101L, 102L)))
-                .usingRecursiveComparison()
-                .isEqualTo(longList);
-        verify(bookingMapper, only()).map(bookings);
     }
 }

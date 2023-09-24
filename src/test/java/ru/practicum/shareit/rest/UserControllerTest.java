@@ -90,6 +90,28 @@ class UserControllerTest {
     }
 
     @Test
+    void createFail() throws Exception {
+        //before
+        UserDto userDto = UserDto.builder()
+                .id(1L)
+                .name("test")
+                .email("testmail.com")
+                .build();
+        when(userService.saveUser(any())).thenReturn(userDto);
+
+        //when
+        mvc.perform(post("/users")
+                        .content(objectMapper.writeValueAsString(userDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$.error", is("Ошибка валидации"), String.class))
+                .andExpect(jsonPath("$.errors.email", is("email is not well-formed email address"), String.class));
+    }
+
+    @Test
     void deleteUser() throws Exception {
         //before
         //when

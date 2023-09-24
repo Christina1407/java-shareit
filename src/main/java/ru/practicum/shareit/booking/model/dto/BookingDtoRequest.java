@@ -1,8 +1,6 @@
 package ru.practicum.shareit.booking.model.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 import ru.practicum.shareit.OnCreate;
 import ru.practicum.shareit.valid.StartBeforeEndDateValid;
 
@@ -13,8 +11,10 @@ import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 @StartBeforeEndDateValid
+@EqualsAndHashCode
 public class BookingDtoRequest {
     @NotNull(message = "startDate is null", groups = OnCreate.class)
     @FutureOrPresent(message = "startDate can't be in past")

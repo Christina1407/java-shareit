@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.manager.UserManager;
 import ru.practicum.shareit.request.model.Request;
@@ -16,6 +18,8 @@ import ru.practicum.shareit.request.service.RequestService;
 import ru.practicum.shareit.request.service.RequestServiceImpl;
 import ru.practicum.shareit.user.model.User;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -86,5 +90,41 @@ class RequestServiceImplTest {
         assertThatThrownBy(() -> requestService.findRequestById(requestId, userId))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessage(null);
+    }
+
+    @Test
+    void findUsersRequests() {
+        //before
+        Long requesterId = 1L;
+        List<Request> requests = new ArrayList<>();
+        when(requestRepository.findByRequester_IdOrderByCreatedDateDesc(requesterId)).thenReturn(requests);
+        List<RequestDtoResponse> responseList = new ArrayList<>();
+        when(requestMapper.map(requests, true)).thenReturn(responseList);
+        //when
+        List<RequestDtoResponse> result = requestService.findUsersRequests(requesterId);
+        //then
+        assertThat(result).isEqualTo(responseList);
+        verify(userManager, only()).findUserById(requesterId);
+        verify(requestRepository, only()).findByRequester_IdOrderByCreatedDateDesc(requesterId);
+        verify(requestMapper, only()).map(requests, true);
+    }
+
+    @Test
+    void findRequests() {
+        //before
+        Long userId = 1L;
+        Pageable pageable = PageRequest.of(0, 10);
+        List<Request> requests = new ArrayList<>();
+        when(requestRepository.findByRequester_IdNotOrderByCreatedDateDesc(userId, pageable)).thenReturn(requests);
+
+        List<RequestDtoResponse> responseList = new ArrayList<>();
+        when(requestMapper.map(requests, true)).thenReturn(responseList);
+        //when
+        List<RequestDtoResponse> result = requestService.findRequests(userId, pageable);
+        //then
+        assertThat(result).isEqualTo(responseList);
+        verify(userManager, only()).findUserById(userId);
+        verify(requestRepository, only()).findByRequester_IdNotOrderByCreatedDateDesc(userId, pageable);
+        verify(requestMapper, only()).map(requests, true);
     }
 }
