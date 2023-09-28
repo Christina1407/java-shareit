@@ -11,6 +11,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @Builder
+
 public class ItemDtoResponse {
 
     private final Long id;

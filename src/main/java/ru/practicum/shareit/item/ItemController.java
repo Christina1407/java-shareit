@@ -2,6 +2,8 @@ package ru.practicum.shareit.item;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.OnCreate;
@@ -26,7 +28,7 @@ public class ItemController {
     private final ItemService itemService;
     private static final String USER_ID = "X-Sharer-User-Id";
 
-    @PostMapping()
+    @PostMapping
     public ItemDto create(@Validated(OnCreate.class) @RequestBody ItemDtoRequest item,
                           @RequestHeader(USER_ID) @Min(1) Long ownerId) {
         log.info("Попытка создания новой вещи {}", item);
@@ -35,11 +37,11 @@ public class ItemController {
 
     @PatchMapping("{itemId}")
     public ItemDto update(@PathVariable("itemId") @Min(1) Long itemId,
-                          @RequestBody ItemDtoRequest itemDto,
-                          @RequestHeader(USER_ID) @NotNull @Min(1) Long ownerId) {
+                          @RequestBody ItemDtoRequest itemDtoRequest,
+                          @RequestHeader(USER_ID) @NotNull @Min(1) Long userId) {
         log.info("Попытка обновления item id = {}", itemId);
-        itemDto.setId(itemId);
-        return itemService.updateItem(itemDto, ownerId);
+        itemDtoRequest.setId(itemId);
+        return itemService.updateItem(itemDtoRequest, userId);
     }
 
     @GetMapping("{itemId}")
@@ -49,14 +51,20 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDtoResponse> findUsersItems(@RequestHeader(USER_ID) @NotNull @Min(1) Long ownerId) {
-        return itemService.findUsersItems(ownerId);
+    public List<ItemDtoResponse> findUsersItems(@RequestHeader(USER_ID) @NotNull @Min(1) Long ownerId,
+                                                @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
+                                                @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
+        Pageable pageable = PageRequest.of(from / size, size);
+        return itemService.findUsersItems(ownerId, pageable);
     }
 
     @GetMapping("/search")
     public List<ItemDto> searchItems(@RequestParam @NotNull String text,
-                                     @RequestHeader(USER_ID) @NotNull @Min(1) Long renterId) {
-        return itemService.searchItems(text, renterId);
+                                     @RequestHeader(USER_ID) @NotNull @Min(1) Long renterId,
+                                     @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
+                                     @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
+        Pageable pageable = PageRequest.of(from / size, size);
+        return itemService.searchItems(text, renterId, pageable);
     }
 
     @PostMapping("{itemId}/comment")

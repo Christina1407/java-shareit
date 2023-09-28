@@ -1,15 +1,14 @@
 package ru.practicum.shareit.item.service;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.enums.EnumStatus;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.repo.BookingRepository;
 import ru.practicum.shareit.exception.NotAllowedException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.item.comments.model.Comment;
 import ru.practicum.shareit.item.comments.model.dto.CommentDtoRequest;
 import ru.practicum.shareit.item.comments.model.dto.CommentDtoResponse;
 import ru.practicum.shareit.item.comments.model.dto.CommentMapper;
@@ -22,6 +21,8 @@ import ru.practicum.shareit.item.model.dto.ItemMapper;
 import ru.practicum.shareit.item.repo.ItemRepository;
 import ru.practicum.shareit.manager.ItemManager;
 import ru.practicum.shareit.manager.UserManager;
+import ru.practicum.shareit.request.model.Request;
+import ru.practicum.shareit.request.repo.RequestRepository;
 import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
@@ -29,10 +30,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
@@ -42,12 +42,17 @@ public class ItemServiceImpl implements ItemService {
     private final ItemManager itemManager;
     private final CommentRepository commentRepository;
     private final BookingRepository bookingRepository;
+    private final RequestRepository requestRepository;
     private final List<EnumStatus> closedStatuses = List.of(EnumStatus.CANCELED, EnumStatus.REJECTED);
 
     @Override
-    public ItemDto saveItem(ItemDtoRequest itemDto, Long ownerId) {
+    public ItemDto saveItem(ItemDtoRequest itemDtoRequest, Long ownerId) {
         User user = userManager.findUserById(ownerId);
-        Item item = itemMapper.map(itemDto, user);
+        Request request = null;
+        if (Objects.nonNull(itemDtoRequest.getRequestId())) {
+            request = requestRepository.findById(itemDtoRequest.getRequestId()).orElseThrow(NotFoundException::new);
+        }
+        Item item = itemMapper.map(itemDtoRequest, user, request);
         return itemMapper.map(itemRepository.save(item));
     }
 
@@ -61,16 +66,18 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ItemDto updateItem(ItemDtoRequest itemDto, Long ownerId) {
+    public ItemDto updateItem(ItemDtoRequest itemDtoRequest, Long userId) {
         //проверка, что айдишники существующих юзера и вещи
-        User user = userManager.findUserById(ownerId);
-        itemManager.findItemById(itemDto.getId());
-        if (user.getItems().stream().noneMatch(item -> item.getId().equals(itemDto.getId()))) {
-            log.error("Редактировать вещь может только её владелец. Пользователь c id = {} не владелец вещи {}", ownerId, itemDto);
-            throw new NotFoundException();
-        }
-        Item item = itemMapper.map(itemDto, user);
-        Item itemForUpdate = preUpdate(user, item);
+        User user = userManager.findUserById(userId);
+        itemManager.findItemById(itemDtoRequest.getId());
+        Item itemForUpdate = user.getItems().stream()
+                .filter(i -> i.getId().equals(itemDtoRequest.getId()))
+                .findFirst()
+                .orElseThrow(() -> {
+                    log.error("Редактировать вещь может только её владелец. Пользователь c id = {} не владелец вещи {}", userId, itemDtoRequest);
+                    return new NotFoundException();
+                });
+        preUpdate(itemForUpdate, itemDtoRequest);
         return itemMapper.map(itemRepository.save(itemForUpdate));
     }
 
@@ -78,58 +85,44 @@ public class ItemServiceImpl implements ItemService {
     public ItemDtoResponse findItemById(Long itemId, Long userId) {
         userManager.findUserById(userId);
         Item item = itemManager.findItemById(itemId);
-        List<CommentDtoResponse> comments = getComments(List.of(itemId));
         if (item.getOwner().getId().equals(userId)) {
-            return itemMapper.map(item, findLastBooking(item), findNextBooking(item), comments);
+            return itemMapper.map(item, findLastBooking(item), findNextBooking(item), commentMapper.map(item.getComments()));
         } else {
-            return itemMapper.map(item, null, null, comments);
+            return itemMapper.map(item, null, null, commentMapper.map(item.getComments()));
         }
     }
 
     @Override
-    public List<ItemDtoResponse> findUsersItems(Long ownerId) {
+    public List<ItemDtoResponse> findUsersItems(Long ownerId, Pageable pageable) {
         User user = userManager.findUserById(ownerId);
-        return mapItemList(user);
+        return mapItemList(itemRepository.findByOwner_Id(user.getId(), pageable));
     }
 
     @Override
-    public List<ItemDto> searchItems(String text, Long renterId) {
+    public List<ItemDto> searchItems(String text, Long renterId, Pageable pageable) {
         userManager.findUserById(renterId);
         if (Objects.nonNull(text) && text.isBlank()) {
             return new ArrayList<>();
         }
-        return itemMapper.map(itemRepository.searchItemsByNameAndDescription("%" + text + "%"));
+        return itemMapper.map(itemRepository.searchItemsByNameAndDescription("%" + text + "%", pageable));
     }
 
-    private List<CommentDtoResponse> getComments(List<Long> itemIds) {
-        List<Comment> comments = commentRepository.findByItem_IdIn(itemIds, Sort.by(Sort.Direction.DESC, "createdDate"));
-        return commentMapper.map(comments);
-    }
-
-    private List<ItemDtoResponse> mapItemList(User user) {
+    private List<ItemDtoResponse> mapItemList(List<Item> items) {
         List<ItemDtoResponse> responseList = new ArrayList<>();
-        List<CommentDtoResponse> comments = getComments(user.getItems().stream()
-                .map(Item::getId)
-                .collect(Collectors.toList()));
-        user.getItems().forEach(
-                item -> {
-                    responseList.add(itemMapper.map(item, findLastBooking(item), findNextBooking(item), comments));
-                }
+        items.forEach(
+                item -> responseList.add(itemMapper.map(item, findLastBooking(item), findNextBooking(item),
+                        commentMapper.map(item.getComments())))
         );
         return responseList;
     }
 
-    private Item preUpdate(User user, Item item) {
-        Item itemForUpdate = user.getItems().stream()
-                .filter(i -> i.getId().equals(item.getId()))
-                .findFirst()
-                .orElseThrow();
-        if (Objects.nonNull(item.getName()) && !item.getName().isBlank()) { // если имя пустое, то оно не изменится
-            itemForUpdate.setName(item.getName());
+    private void preUpdate(Item itemForUpdate, ItemDtoRequest itemDtoRequest) {
+        if (Objects.nonNull(itemDtoRequest.getName()) && !itemDtoRequest.getName().isBlank()) { // если имя пустое, то оно не изменится
+            itemForUpdate.setName(itemDtoRequest.getName());
         }
-        Optional.ofNullable(item.getDescription()).ifPresent(description -> itemForUpdate.setDescription(item.getDescription())); //описание может быть пустым
-        Optional.ofNullable(item.getAvailable()).ifPresent(available -> itemForUpdate.setAvailable(item.getAvailable()));
-        return itemForUpdate;
+        Optional.ofNullable(itemDtoRequest.getDescription()).ifPresent(description -> itemForUpdate.setDescription(itemDtoRequest.getDescription())); //описание может быть пустым
+        Optional.ofNullable(itemDtoRequest.getAvailable()).ifPresent(available -> itemForUpdate.setAvailable(itemDtoRequest.getAvailable()));
+        ;
     }
 
     private Booking findNextBooking(Item item) {

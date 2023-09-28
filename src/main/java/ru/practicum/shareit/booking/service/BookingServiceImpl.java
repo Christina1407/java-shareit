@@ -1,8 +1,9 @@
 package ru.practicum.shareit.booking.service;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.enums.EnumState;
 import ru.practicum.shareit.booking.enums.EnumStatus;
@@ -27,7 +28,7 @@ import java.util.stream.Collectors;
 import static java.util.Objects.nonNull;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
@@ -36,11 +37,11 @@ public class BookingServiceImpl implements BookingService {
     private final ItemManager itemManager;
 
     @Override
-    public BookingDtoResponse saveBooking(BookingDtoRequest bookingDtoRequest, Long ownerId) {
-        User user = userManager.findUserById(ownerId);
+    public BookingDtoResponse saveBooking(BookingDtoRequest bookingDtoRequest, Long userId) {
+        User user = userManager.findUserById(userId);
         Item item = itemManager.findItemById(bookingDtoRequest.getItemId());
         if (item.getAvailable()) {
-            if (!item.getOwner().getId().equals(ownerId)) {
+            if (!item.getOwner().getId().equals(userId)) {
                 //проверяем пересечение по времени с другими подтверждёнными бронированиями на эту вещь
                 BooleanExpression intersectionDate = isIntersection(bookingDtoRequest.getStart(), bookingDtoRequest.getEnd(),
                         item, EnumStatus.APPROVED, null);
@@ -54,7 +55,7 @@ public class BookingServiceImpl implements BookingService {
                     throw new NotAllowedException();
                 }
             } else {
-                log.error("Вещь id = {} не может быть забронирована владельцем вещи  userId = {}", item.getId(), ownerId);
+                log.error("Вещь id = {} не может быть забронирована владельцем вещи  userId = {}", item.getId(), userId);
                 throw new NotFoundException();
             }
         } else {
@@ -80,10 +81,8 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public BookingDtoResponse approveOrRejectBooking(Long bookingId, Long userId, Boolean approved) {
-        userManager.findUserById(userId);
+    public BookingDtoResponse approveOrRejectBooking(Long bookingId, Long userId, boolean approved) {
         Booking booking = getBooking(bookingId, userId);// если юзер не owner или booker, выдается ошибка
-        Item item = itemManager.findItemById(booking.getItem().getId());
 
         if (booking.getStatus().equals(EnumStatus.WAITING)) {
             if (booking.getBooker().getId().equals(userId)) {
@@ -99,7 +98,7 @@ public class BookingServiceImpl implements BookingService {
             } else {
                 if (approved) {
                     //находим бронирования для данной вещи со статусом WAITING, которые пересекаются по времени, и отменяем их
-                    BooleanExpression intersectionDate = isIntersection(booking.getStartDate(), booking.getEndDate(), item,
+                    BooleanExpression intersectionDate = isIntersection(booking.getStartDate(), booking.getEndDate(), booking.getItem(),
                             EnumStatus.WAITING, bookingId);
                     Iterable<Booking> bookings = bookingRepository.findAll(intersectionDate);
                     bookings.forEach(b -> b.setStatus(EnumStatus.REJECTED));
@@ -136,34 +135,34 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDtoResponse> findUsersBookings(Long userId, EnumState state) {
+    public List<BookingDtoResponse> findUsersBookings(Long userId, EnumState state, Pageable pageable) {
         userManager.findUserById(userId);
         List<Booking> bookings = new ArrayList<>();
         switch (state) {
             case ALL:
-                bookings = bookingRepository.findByBooker_IdOrderByStartDateDesc(userId);
+                bookings = bookingRepository.findByBooker_IdOrderByStartDateDesc(userId, pageable);
                 break;
             case PAST:
-                bookings = bookingRepository.findByBooker_IdAndEndDateLessThanEqualOrderByStartDateDesc(userId, LocalDateTime.now());
+                bookings = bookingRepository.findByBooker_IdAndEndDateLessThanEqualOrderByStartDateDesc(userId, LocalDateTime.now(), pageable);
                 break;
             case CURRENT:
-                bookings = bookingRepository.findCurrentBookings(userId, LocalDateTime.now());
+                bookings = bookingRepository.findCurrentBookings(userId, LocalDateTime.now(), pageable);
                 break;
             case FUTURE:
-                bookings = bookingRepository.findByBooker_IdAndStartDateGreaterThanEqualOrderByStartDateDesc(userId, LocalDateTime.now());
+                bookings = bookingRepository.findByBooker_IdAndStartDateGreaterThanEqualOrderByStartDateDesc(userId, LocalDateTime.now(), pageable);
                 break;
             case WAITING:
-                bookings = bookingRepository.findByBooker_IdAndStatusInOrderByStartDateDesc(userId, List.of(EnumStatus.WAITING));
+                bookings = bookingRepository.findByBooker_IdAndStatusInOrderByStartDateDesc(userId, List.of(EnumStatus.WAITING), pageable);
                 break;
             case REJECTED:
-                bookings = bookingRepository.findByBooker_IdAndStatusInOrderByStartDateDesc(userId, List.of(EnumStatus.REJECTED, EnumStatus.CANCELED));
+                bookings = bookingRepository.findByBooker_IdAndStatusInOrderByStartDateDesc(userId, List.of(EnumStatus.REJECTED, EnumStatus.CANCELED), pageable);
                 break;
         }
         return bookingMapper.map(bookings);
     }
 
     @Override
-    public List<BookingDtoResponse> findOwnersBookings(Long ownerId, EnumState state) {
+    public List<BookingDtoResponse> findOwnersBookings(Long ownerId, EnumState state, Pageable pageable) {
         User user = userManager.findUserById(ownerId);
         List<Item> items = user.getItems();
         if (items.isEmpty()) {
@@ -177,22 +176,22 @@ public class BookingServiceImpl implements BookingService {
 
         switch (state) {
             case ALL:
-                bookings = bookingRepository.findByItem_IdInOrderByStartDateDesc(itemsIds);
+                bookings = bookingRepository.findByItem_IdInOrderByStartDateDesc(itemsIds, pageable);
                 break;
             case PAST:
-                bookings = bookingRepository.findByItem_IdInAndEndDateLessThanEqualOrderByStartDateDesc(itemsIds, LocalDateTime.now());
+                bookings = bookingRepository.findByItem_IdInAndEndDateLessThanEqualOrderByStartDateDesc(itemsIds, LocalDateTime.now(), pageable);
                 break;
             case CURRENT:
-                bookings = bookingRepository.findCurrentOwnerBookings(itemsIds, LocalDateTime.now());
+                bookings = bookingRepository.findCurrentOwnerBookings(itemsIds, LocalDateTime.now(), pageable);
                 break;
             case FUTURE:
-                bookings = bookingRepository.findByItem_IdInAndStartDateGreaterThanEqualOrderByStartDateDesc(itemsIds, LocalDateTime.now());
+                bookings = bookingRepository.findByItem_IdInAndStartDateGreaterThanEqualOrderByStartDateDesc(itemsIds, LocalDateTime.now(), pageable);
                 break;
             case WAITING:
-                bookings = bookingRepository.findByItem_IdInAndStatusInOrderByStartDateDesc(itemsIds, List.of(EnumStatus.WAITING));
+                bookings = bookingRepository.findByItem_IdInAndStatusInOrderByStartDateDesc(itemsIds, List.of(EnumStatus.WAITING), pageable);
                 break;
             case REJECTED:
-                bookings = bookingRepository.findByItem_IdInAndStatusInOrderByStartDateDesc(itemsIds, List.of(EnumStatus.REJECTED, EnumStatus.CANCELED));
+                bookings = bookingRepository.findByItem_IdInAndStatusInOrderByStartDateDesc(itemsIds, List.of(EnumStatus.REJECTED, EnumStatus.CANCELED), pageable);
                 break;
         }
         return bookingMapper.map(bookings);

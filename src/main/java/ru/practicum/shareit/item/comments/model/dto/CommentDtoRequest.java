@@ -16,5 +16,4 @@ public class CommentDtoRequest {
     @NotBlank(message = "text is empty")
     @Size(max = 2000, message = "name is more than 2000 symbols")
     private String text;
-
 }

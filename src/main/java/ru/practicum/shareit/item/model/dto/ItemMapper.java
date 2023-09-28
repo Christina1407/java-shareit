@@ -5,9 +5,11 @@ import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.dto.BookingItemDto;
 import ru.practicum.shareit.item.comments.model.dto.CommentDtoResponse;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.model.Request;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.nonNull;
@@ -44,21 +46,26 @@ public class ItemMapper {
     }
 
     private ItemDto getBuild(Item item) {
-        return ItemDto.builder()
+        ItemDto itemDto = ItemDto.builder()
                 .id(item.getId())
                 .name(item.getName())
                 .description(item.getDescription())
                 .available(item.getAvailable())
                 .build();
+        if (Objects.nonNull(item.getRequest())) {
+            itemDto.setRequestId(item.getRequest().getId());
+        }
+        return itemDto;
     }
 
-    private Item getBuild(ItemDtoRequest item, User user) {
+    private Item getBuild(ItemDtoRequest item, User user, Request request) {
         return Item.builder()
                 .id(item.getId())
                 .name(item.getName())
                 .description(item.getDescription())
                 .available(item.getAvailable())
                 .owner(user)
+                .request(request)
                 .build();
     }
 
@@ -70,7 +77,7 @@ public class ItemMapper {
         return getBuild(item);
     }
 
-    public Item map(ItemDtoRequest item, User user) {
-        return getBuild(item, user);
+    public Item map(ItemDtoRequest item, User user, Request request) {
+        return getBuild(item, user, request);
     }
 }
