@@ -40,8 +40,8 @@ class RequestMapperTest {
                 .size(2)
                 .create();
         List<ItemDto> itemDtoList = Instancio.ofList(ItemDto.class)
-                        .size(3)
-                                .create();
+                .size(3)
+                .create();
         when(itemMapper.map(requestList.get(0).getItems())).thenReturn(itemDtoList);
         when(itemMapper.map(requestList.get(1).getItems())).thenReturn(itemDtoList);
         //when

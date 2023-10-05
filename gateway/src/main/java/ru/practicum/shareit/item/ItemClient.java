@@ -16,6 +16,7 @@ import java.util.Map;
 @Service
 public class ItemClient extends BaseClient {
     private static final String API_PREFIX = "/items";
+
     @Autowired
     public ItemClient(@Value("${shareit-server.url}") String serverUrl, RestTemplateBuilder builder) {
         super(
@@ -26,9 +27,8 @@ public class ItemClient extends BaseClient {
         );
     }
 
-
     public ResponseEntity<Object> saveItem(ItemDtoRequest item, Long ownerId) {
-        return post("", ownerId, item );
+        return post("", ownerId, item);
     }
 
     public ResponseEntity<Object> updateItem(ItemDtoRequest itemDtoRequest, Long userId, Long itemId) {

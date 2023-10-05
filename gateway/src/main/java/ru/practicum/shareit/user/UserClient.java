@@ -16,6 +16,7 @@ import java.util.Map;
 public class UserClient extends BaseClient {
 
     private static final String API_PREFIX = "/users";
+
     @Autowired
     public UserClient(@Value("${shareit-server.url}") String serverUrl, RestTemplateBuilder builder) {
         super(
@@ -25,6 +26,7 @@ public class UserClient extends BaseClient {
                         .build()
         );
     }
+
     public ResponseEntity<Object> getAllUsers() {
         return get("");
     }
@@ -51,6 +53,6 @@ public class UserClient extends BaseClient {
         Map<String, Object> parameters = Map.of(
                 "userId", userId
         );
-        return get("/{userId}",null, parameters);
+        return get("/{userId}", null, parameters);
     }
 }

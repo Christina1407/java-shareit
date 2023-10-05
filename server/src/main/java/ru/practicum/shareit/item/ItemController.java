@@ -23,7 +23,7 @@ public class ItemController {
     private static final String USER_ID = "X-Sharer-User-Id";
 
     @PostMapping
-    public ItemDto create( @RequestBody ItemDtoRequest item,
+    public ItemDto create(@RequestBody ItemDtoRequest item,
                           @RequestHeader(USER_ID) Long ownerId) {
         log.info("Попытка создания новой вещи {}", item);
         return itemService.saveItem(item, ownerId);

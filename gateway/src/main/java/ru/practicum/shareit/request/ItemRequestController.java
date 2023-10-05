@@ -28,8 +28,8 @@ public class ItemRequestController {
     }
 
     @GetMapping("{requestId}")
-    public ResponseEntity<Object>  findRequestById(@PathVariable("requestId") @Min(1) Long requestId,
-                                              @RequestHeader(USER_ID) @NotNull @Min(1) Long userId) {
+    public ResponseEntity<Object> findRequestById(@PathVariable("requestId") @Min(1) Long requestId,
+                                                  @RequestHeader(USER_ID) @NotNull @Min(1) Long userId) {
         return requestClient.findRequestById(requestId, userId);
     }
 
@@ -39,9 +39,9 @@ public class ItemRequestController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<Object>  findRequests(@RequestHeader(USER_ID) @NotNull @Min(1) Long userId,
-                                                 @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
-                                                 @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
+    public ResponseEntity<Object> findRequests(@RequestHeader(USER_ID) @NotNull @Min(1) Long userId,
+                                               @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
+                                               @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
         return requestClient.findRequests(userId, from, size);
     }
 

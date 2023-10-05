@@ -24,15 +24,15 @@ public class ItemController {
 
     @PostMapping
     public ResponseEntity<Object> create(@Validated(OnCreate.class) @RequestBody ItemDtoRequest item,
-                          @RequestHeader(USER_ID) @Min(1) Long ownerId) {
+                                         @RequestHeader(USER_ID) @Min(1) Long ownerId) {
         log.info("Попытка создания новой вещи {}", item);
         return itemClient.saveItem(item, ownerId);
     }
 
     @PatchMapping("{itemId}")
     public ResponseEntity<Object> update(@PathVariable("itemId") @Min(1) Long itemId,
-                          @RequestBody ItemDtoRequest itemDtoRequest,
-                          @RequestHeader(USER_ID) @NotNull @Min(1) Long userId) {
+                                         @RequestBody ItemDtoRequest itemDtoRequest,
+                                         @RequestHeader(USER_ID) @NotNull @Min(1) Long userId) {
         log.info("Попытка обновления item id = {}", itemId);
         return itemClient.updateItem(itemDtoRequest, userId, itemId);
     }
@@ -45,23 +45,23 @@ public class ItemController {
 
     @GetMapping
     public ResponseEntity<Object> findUsersItems(@RequestHeader(USER_ID) @NotNull @Min(1) Long ownerId,
-                                                       @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
-                                                       @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
+                                                 @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
+                                                 @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
         return itemClient.findUsersItems(ownerId, from, size);
     }
 
     @GetMapping("/search")
     public ResponseEntity<Object> searchItems(@RequestParam @NotNull String text,
-                                     @RequestHeader(USER_ID) @NotNull @Min(1) Long renterId,
-                                     @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
-                                     @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
+                                              @RequestHeader(USER_ID) @NotNull @Min(1) Long renterId,
+                                              @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
+                                              @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
         return itemClient.searchItems(renterId, text, from, size);
     }
 
     @PostMapping("{itemId}/comment")
     public ResponseEntity<Object> createComment(@Valid @RequestBody CommentDtoRequest comment,
-                                            @PathVariable("itemId") @Min(1) Long itemId,
-                                            @RequestHeader(USER_ID) @Min(1) Long userId) {
+                                                @PathVariable("itemId") @Min(1) Long itemId,
+                                                @RequestHeader(USER_ID) @Min(1) Long userId) {
         log.info("Попытка создания нового комментария {} to Item id = {}", comment, itemId);
         return itemClient.saveComment(userId, itemId, comment);
     }
