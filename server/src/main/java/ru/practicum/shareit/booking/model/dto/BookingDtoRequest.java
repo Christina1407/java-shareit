@@ -4,10 +4,11 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Getter
+@Setter
 @EqualsAndHashCode
 public class BookingDtoRequest {
     private LocalDateTime start;

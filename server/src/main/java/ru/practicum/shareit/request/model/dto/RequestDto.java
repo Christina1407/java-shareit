@@ -2,11 +2,12 @@ package ru.practicum.shareit.request.model.dto;
 
 import lombok.*;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
 @EqualsAndHashCode
+@Builder
 public class RequestDto {
     private String description;
 }
